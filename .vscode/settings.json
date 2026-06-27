@@ -1,0 +1,6 @@
+{
+    "filePathCommenter.includePaths": [
+        "src",
+        "app"
+    ]
+}
