@@ -42,7 +42,9 @@ export default function AdminLoginPortal() {
       }
 
       // Bake access parameters to browser session cookies for Edge Middleware tracking
-      document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=${data.session.expires_in}; SameSite=Strict; Secure`;
+      // Secure only on HTTPS — browsers drop Secure cookies on http://localhost
+      const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
+      document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=${data.session.expires_in}; SameSite=Lax${secureFlag}`;
 
       setStatus({ type: 'success', message: 'Access Cleared. Opening Dashboard Panel...' });
       setTimeout(() => router.push('/admin/dashboard'), 1000);
