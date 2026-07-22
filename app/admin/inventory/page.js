@@ -35,44 +35,80 @@ function ExpandableColumnSearch({
   placeholder,
   wide = false,
   activeHint = false,
-  trailing = null,
+  scopeToggle = null,
 }) {
   const wrapRef = useRef(null);
   const inputRef = useRef(null);
+  const [visualOpen, setVisualOpen] = useState(open);
+  const closingRef = useRef(false);
 
   useEffect(() => {
     if (open) {
-      const t = requestAnimationFrame(() => inputRef.current?.focus());
-      return () => cancelAnimationFrame(t);
+      closingRef.current = false;
+      setVisualOpen(true);
+    } else if (!closingRef.current) {
+      setVisualOpen(false);
     }
   }, [open]);
 
   useEffect(() => {
-    if (!open) return undefined;
-    const onPointerDown = (event) => {
-      if (wrapRef.current && !wrapRef.current.contains(event.target)) {
-        if (!value && !activeHint) onClose();
-      }
-    };
-    document.addEventListener('mousedown', onPointerDown);
-    return () => document.removeEventListener('mousedown', onPointerDown);
-  }, [open, value, activeHint, onClose]);
+    if (visualOpen) {
+      const t = requestAnimationFrame(() => inputRef.current?.focus());
+      return () => cancelAnimationFrame(t);
+    }
+  }, [visualOpen]);
 
-  const handleClearOrClose = () => {
+  const finishClose = () => {
+    if (!closingRef.current) return;
+    closingRef.current = false;
+    onClose();
+  };
+
+  const startClose = () => {
     if (value) {
       onChange('');
       return;
     }
-    onClose();
+    closingRef.current = true;
+    setVisualOpen(false);
   };
 
+  useEffect(() => {
+    if (!visualOpen) return undefined;
+    const onPointerDown = (event) => {
+      if (wrapRef.current && !wrapRef.current.contains(event.target)) {
+        if (!value && !activeHint) {
+          closingRef.current = true;
+          setVisualOpen(false);
+        }
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, [visualOpen, value, activeHint]);
+
+  useEffect(() => {
+    if (visualOpen || !closingRef.current) return undefined;
+    const t = setTimeout(() => {
+      if (closingRef.current) finishClose();
+    }, 220);
+    return () => clearTimeout(t);
+  }, [visualOpen]);
+
+  const handlePanelTransitionEnd = (event) => {
+    if (event.propertyName !== 'width') return;
+    if (!visualOpen && closingRef.current) finishClose();
+  };
+
+  const expandedWidth = wide ? 'w-52' : 'w-40';
+
   return (
-    <div ref={wrapRef} className={`relative h-8 w-8 flex-shrink-0 ${open ? 'z-20' : 'z-10'}`}>
+    <div ref={wrapRef} className={`relative h-8 w-8 flex-shrink-0 ${visualOpen ? 'z-20' : 'z-10'}`}>
       <button
         type="button"
         onClick={onOpen}
-        className={`h-8 w-8 rounded-md border bg-zinc-950 flex items-center justify-center transition ${
-          open ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        className={`box-border h-8 w-8 rounded-md border bg-zinc-950 flex items-center justify-center transition-opacity duration-200 ${
+          visualOpen ? 'opacity-0 pointer-events-none' : 'opacity-100'
         } ${
           value || activeHint
             ? 'border-orange-500/40 text-orange-400'
@@ -85,31 +121,48 @@ function ExpandableColumnSearch({
       </button>
 
       <div
-        className={`absolute right-0 top-0 h-8 overflow-hidden origin-right transition-[width,opacity] duration-200 ease-out ${
-          open
-            ? `${wide ? 'w-[min(18rem,calc(100vw-7rem))] md:w-64' : 'w-[min(12.5rem,calc(100vw-7rem))] md:w-48'} opacity-100`
-            : 'w-8 opacity-0 pointer-events-none'
+        onTransitionEnd={handlePanelTransitionEnd}
+        className={`absolute right-0 top-0 h-8 overflow-hidden origin-right transition-[width,opacity] duration-200 ease-in-out ${
+          visualOpen ? `${expandedWidth} opacity-100` : 'w-8 opacity-0 pointer-events-none'
         }`}
       >
-        <div className="flex items-center gap-1 w-full h-full bg-zinc-950 border border-zinc-700 rounded-md shadow-xl pl-2 pr-1">
-          <Search className="w-3 h-3 text-zinc-500 flex-shrink-0" />
-          <input
-            ref={inputRef}
-            type="text"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder}
-            className="flex-1 min-w-0 bg-transparent text-[11px] text-zinc-200 placeholder-zinc-600 focus:outline-none h-full"
-          />
-          {trailing}
-          <button
-            type="button"
-            onClick={handleClearOrClose}
-            className="h-6 w-6 flex-shrink-0 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-200"
-            aria-label={value ? 'Clear search' : 'Close search'}
-          >
-            <X className="w-3 h-3" />
-          </button>
+        <div className="box-border flex items-stretch w-full h-8 rounded-md border border-zinc-800 bg-zinc-950 overflow-hidden">
+          {scopeToggle ? (
+            <button
+              type="button"
+              onClick={scopeToggle.onToggle}
+              disabled={scopeToggle.disabled}
+              aria-pressed={scopeToggle.active}
+              className={`h-8 px-2 flex-shrink-0 border-r text-[9px] font-bold uppercase tracking-wide transition disabled:opacity-30 ${
+                scopeToggle.active
+                  ? 'border-zinc-800 bg-orange-950/50 text-orange-400'
+                  : 'border-zinc-800 text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900/80'
+              }`}
+              title={scopeToggle.title}
+            >
+              All
+            </button>
+          ) : null}
+
+          <div className="flex items-center gap-1 flex-1 min-w-0 h-8 px-1.5">
+            <Search className="w-3 h-3 text-zinc-500 flex-shrink-0" />
+            <input
+              ref={inputRef}
+              type="text"
+              value={value}
+              onChange={(e) => onChange(e.target.value)}
+              placeholder={placeholder}
+              className="flex-1 min-w-0 bg-transparent text-[11px] leading-none text-zinc-200 placeholder-zinc-600 focus:outline-none h-full"
+            />
+            <button
+              type="button"
+              onClick={startClose}
+              className="h-6 w-6 flex-shrink-0 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-200"
+              aria-label={value ? 'Clear search' : 'Close search'}
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -789,7 +842,7 @@ export default function InventoryPage() {
       {/* Column 1: Roots */}
       <div className={`col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'roots' ? 'flex' : 'hidden md:flex'}`}>
         <div className="relative h-8 mb-2.5 flex items-center justify-between gap-2 px-0.5 flex-shrink-0 w-full min-w-0">
-          <h3 className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex-shrink-0 relative z-0">Roots</h3>
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex-shrink-0 relative z-[25] bg-zinc-900 pr-1">Roots</h3>
           <div className="flex items-center gap-1.5 flex-shrink-0 relative z-10">
             <ExpandableColumnSearch
               open={rootSearchOpen}
@@ -834,7 +887,7 @@ export default function InventoryPage() {
       {/* Column 2: Subs */}
       <div className={`col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'subs' ? 'flex' : 'hidden md:flex'}`}>
         <div className="relative h-8 mb-2.5 flex items-center justify-between gap-2 px-0.5 flex-shrink-0 w-full min-w-0">
-          <h3 className="text-[11px] font-bold uppercase tracking-wider text-blue-400 flex-shrink-0 relative z-0">Subs</h3>
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-blue-400 flex-shrink-0 relative z-[25] bg-zinc-900 pr-1">Subs</h3>
           <div className="flex items-center gap-1.5 flex-shrink-0 relative z-10">
             <ExpandableColumnSearch
               open={subSearchOpen}
@@ -881,7 +934,7 @@ export default function InventoryPage() {
       {/* Column 3: Brands */}
       <div className={`col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'brands' ? 'flex' : 'hidden md:flex'}`}>
         <div className="relative h-8 mb-2.5 flex items-center justify-between gap-2 px-0.5 flex-shrink-0 w-full min-w-0">
-          <h3 className="text-[11px] font-bold uppercase tracking-wider text-purple-400 flex-shrink-0 relative z-0">Brands</h3>
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-purple-400 flex-shrink-0 relative z-[25] bg-zinc-900 pr-1">Brands</h3>
           <div className="flex items-center gap-1.5 flex-shrink-0 relative z-10">
             <ExpandableColumnSearch
               open={brandSearchOpen}
@@ -930,7 +983,7 @@ export default function InventoryPage() {
         
         {/* Header Controls Line */}
         <div className="relative h-8 mb-2.5 flex items-center justify-between gap-2 px-0.5 flex-shrink-0 select-none w-full min-w-0">
-          <h3 className="text-[11px] font-bold uppercase tracking-wider text-orange-400 whitespace-nowrap flex-shrink-0 relative z-0">
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-orange-400 whitespace-nowrap flex-shrink-0 relative z-[25] bg-zinc-900 pr-1">
             <span className="md:hidden">Prod</span>
             <span className="hidden md:inline">Products</span>
           </h3>
@@ -945,39 +998,28 @@ export default function InventoryPage() {
               placeholder={productSearchScope === 'all' ? 'All products…' : 'In brand…'}
               wide
               activeHint={productSearchScope === 'all'}
-              trailing={
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (productSearchScope === 'all') {
-                      if (selectedBrand) setProductSearchScope('brand');
-                    } else {
-                      setProductSearchScope('all');
-                    }
-                  }}
-                  disabled={productSearchScope === 'all' && !selectedBrand}
-                  aria-pressed={productSearchScope === 'all'}
-                  className={`h-6 px-1.5 flex-shrink-0 rounded border text-[9px] font-bold uppercase tracking-wide transition disabled:opacity-30 ${
-                    productSearchScope === 'all'
-                      ? 'border-orange-500/50 bg-orange-950/60 text-orange-400'
-                      : 'border-zinc-700 bg-zinc-900 text-zinc-500 hover:text-zinc-300'
-                  }`}
-                  title={
-                    productSearchScope === 'all'
-                      ? 'All products search is on — click for this brand only'
-                      : 'Search this brand only — click for all products'
+              scopeToggle={{
+                active: productSearchScope === 'all',
+                disabled: productSearchScope === 'all' && !selectedBrand,
+                onToggle: () => {
+                  if (productSearchScope === 'all') {
+                    if (selectedBrand) setProductSearchScope('brand');
+                  } else {
+                    setProductSearchScope('all');
                   }
-                >
-                  All
-                </button>
-              }
+                },
+                title:
+                  productSearchScope === 'all'
+                    ? 'All products search is on — click for this brand only'
+                    : 'Search this brand only — click for all products',
+              }}
             />
 
             <div className="relative flex-shrink-0" ref={dropdownRef}>
               <button
                 type="button"
                 onClick={() => setIsFilterDropdownOpen(!isFilterDropdownOpen)}
-                className={`rounded-md border text-zinc-400 hover:text-zinc-200 bg-zinc-950 transition flex items-center justify-center h-8 w-8 ${conditionFilter !== 'All' ? 'border-orange-500/40 text-orange-400' : 'border-zinc-800'}`}
+                className={`box-border rounded-md border text-zinc-400 hover:text-zinc-200 bg-zinc-950 transition flex items-center justify-center h-8 w-8 ${conditionFilter !== 'All' ? 'border-orange-500/40 text-orange-400' : 'border-zinc-800'}`}
               >
                 <Filter className="w-3.5 h-3.5" />
               </button>
@@ -1002,8 +1044,8 @@ export default function InventoryPage() {
               )}
             </div>
 
-            <span className="bg-orange-950 text-orange-400 px-1.5 rounded text-[10px] font-mono h-8 min-w-8 flex items-center justify-center border border-orange-900/30">{displayedProducts.length}</span>
-            <button disabled={!selectedBrand && !isSearchingGlobally} onClick={() => openAddModal('product')} className="h-8 w-8 flex items-center justify-center rounded bg-orange-950/60 hover:bg-orange-900 text-orange-400 border border-orange-800/40 disabled:opacity-20 disabled:hover:bg-orange-950/60 transition" title="Add New Product Item">
+            <span className="box-border bg-orange-950 text-orange-400 px-1.5 rounded text-[10px] font-mono h-8 min-w-8 flex items-center justify-center border border-orange-900/30">{displayedProducts.length}</span>
+            <button disabled={!selectedBrand && !isSearchingGlobally} onClick={() => openAddModal('product')} className="box-border h-8 w-8 flex items-center justify-center rounded bg-orange-950/60 hover:bg-orange-900 text-orange-400 border border-orange-800/40 disabled:opacity-20 disabled:hover:bg-orange-950/60 transition" title="Add New Product Item">
               <Plus className="w-4 h-4" />
             </button>
           </div>
