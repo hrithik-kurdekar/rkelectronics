@@ -2,7 +2,10 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '@/lib/supabase/client'; 
+import { supabase } from '@/lib/supabase/client';
+import { revalidateStorefront } from '@/app/actions/revalidate-storefront';
+import { CONDITION_FILTER_OPTIONS } from '@/lib/product-conditions';
+import { searchIlikePattern } from '@/lib/search-query';
 import { Star, Edit3, Trash2, X, ImagePlus, Inbox, GripVertical, AlertCircle, Search, Filter, Plus } from 'lucide-react';
 
 const BUCKET_NAME = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || 'product-media';
@@ -155,11 +158,16 @@ export default function InventoryPage() {
 
   const handleGlobalSearch = async (query) => {
     setIsSearchingGlobally(true);
-    const escapedQuery = `%${query}%`;
+    const pattern = searchIlikePattern(query);
+    if (!pattern) {
+      setGlobalSearchResults([]);
+      return;
+    }
+
     const { data, error } = await supabase
       .from('products')
       .select('*')
-      .or(`title.ilike.${escapedQuery},sku_code.ilike.${escapedQuery}`)
+      .or(`title.ilike.${pattern},sku_code.ilike.${pattern}`)
       .order('is_featured', { ascending: false });
 
     if (!error) {
@@ -462,7 +470,7 @@ export default function InventoryPage() {
         if (pendingUploadSlots.length > 0) {
           const uploadPromises = pendingUploadSlots.map(async (photo, index) => {
             const compressedFileBlob = await compressImageToWebp(photo.file);
-            const filename = `prod_${Date.now()}_${index}.webp`;
+            const filename = `${crypto.randomUUID()}.webp`;
             
             const { error: uploadError } = await supabase.storage
               .from(BUCKET_NAME)
@@ -525,6 +533,8 @@ export default function InventoryPage() {
         if (selectedBrand) await fetchProductsForBrand(selectedBrand);
       }
 
+      await revalidateStorefront();
+
     } catch (err) {
       alert(`Transaction Halted: ${err.message}`);
     } finally { 
@@ -546,6 +556,7 @@ export default function InventoryPage() {
       } else if (selectedBrand) {
         await fetchProductsForBrand(selectedBrand); 
       }
+      await revalidateStorefront();
     }
   };
 
@@ -569,6 +580,7 @@ export default function InventoryPage() {
         if (isSearchingGlobally) handleGlobalSearch(searchQuery);
         else if (selectedBrand) await fetchProductsForBrand(selectedBrand); 
       }
+      await revalidateStorefront();
     }
   };
 
@@ -744,7 +756,7 @@ export default function InventoryPage() {
               {isFilterDropdownOpen && (
                 <div className="absolute right-0 mt-1.5 w-32 bg-zinc-900 border border-zinc-800 rounded-lg shadow-xl py-1 z-30">
                   <div className="text-[8px] font-bold uppercase tracking-wider text-zinc-500 px-2.5 py-1">Condition</div>
-                  {['All', 'New', 'Refurbished', 'Used'].map((cond) => (
+                  {CONDITION_FILTER_OPTIONS.map((cond) => (
                     <button
                       key={cond}
                       type="button"

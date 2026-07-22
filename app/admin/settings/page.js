@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import { revalidateStorefront } from '@/app/actions/revalidate-storefront';
 import { Link2, Plus, Edit3, Trash2, X, Mail, Phone, MessageSquare, Globe, Inbox, AlertCircle } from 'lucide-react';
 
 export default function ConnectionsPage() {
@@ -150,6 +151,7 @@ export default function ConnectionsPage() {
 
       setIsModalOpen(false);
       await fetchConnections();
+      await revalidateStorefront();
     } catch (err) {
       setValidationError(`Error saving parameters: ${err.message}`);
     } finally {
@@ -160,7 +162,10 @@ export default function ConnectionsPage() {
   const handleDeleteConnection = async (id) => {
     if (confirm("Are you sure you want to delete this communication entry?")) {
       const { error } = await supabase.from('connections').delete().eq('id', id);
-      if (!error) await fetchConnections();
+      if (!error) {
+        await fetchConnections();
+        await revalidateStorefront();
+      }
     }
   };
 
@@ -173,6 +178,7 @@ export default function ConnectionsPage() {
 
     if (!error) {
       setConnections(connections.map(c => c.id === item.id ? { ...c, is_active: nextState } : c));
+      await revalidateStorefront();
     }
   };
 
