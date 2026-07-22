@@ -1,5 +1,5 @@
-import { supabase } from '@/config/supabase';
 import { Mail, Phone, MessageSquare, Globe } from 'lucide-react';
+import { fetchActiveConnections } from '@/lib/data';
 
 function iconForType(type) {
   switch (type) {
@@ -28,11 +28,7 @@ function hrefForConnection(connection) {
 }
 
 export default async function StorefrontFooter() {
-  const { data: connections } = await supabase
-    .from('connections')
-    .select('*')
-    .eq('is_active', true)
-    .order('created_at', { ascending: true });
+  const { data: connections } = await fetchActiveConnections();
 
   if (!connections?.length) return null;
 

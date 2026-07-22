@@ -5,13 +5,20 @@ import React, { useState, useEffect, useRef } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { revalidateStorefront } from '@/app/actions/revalidate-storefront';
 import { CONDITION_FILTER_OPTIONS } from '@/lib/product-conditions';
-import { searchIlikePattern } from '@/lib/search-query';
 import {
   getMediaLimits,
   storagePathFromPublicUrl,
   truncateText,
 } from '@/lib/media-limits';
 import { compressImageToWebp } from '@/lib/compress-image';
+import {
+  isDemoMode,
+  DEMO_WRITE_MESSAGE,
+  fetchCategories,
+  fetchCategoryById,
+  fetchProductsForBrand as loadProductsForBrand,
+  searchProducts,
+} from '@/lib/data';
 import { Star, Edit3, Trash2, X, ImagePlus, Inbox, GripVertical, AlertCircle, Search, Filter, Plus } from 'lucide-react';
 import ErrorBanner from '@/app/components/ErrorBanner';
 
@@ -111,7 +118,7 @@ export default function InventoryPage() {
   }, [searchQuery]);
 
   const fetchInitialHierarchy = async () => {
-    const { data: rootData, error } = await supabase.from('categories').select('*').eq('type', 'root').order('sort_order');
+    const { data: rootData, error } = await fetchCategories({ type: 'root' });
     if (error) {
       setLoadError('Could not load inventory categories. Please refresh the page.');
       return;
@@ -127,7 +134,7 @@ export default function InventoryPage() {
   };
 
   const refreshSubColumn = async (rootId, selectDefault = false) => {
-    const { data: subData, error } = await supabase.from('categories').select('*').eq('type', 'sub').eq('parent_id', rootId).order('sort_order');
+    const { data: subData, error } = await fetchCategories({ type: 'sub', parentId: rootId });
     if (error) {
       console.error('Failed fetching sub matrix:', error.message);
       return;
@@ -144,7 +151,7 @@ export default function InventoryPage() {
   };
 
   const refreshBrandColumn = async (subId, selectDefault = false) => {
-    const { data: brandData, error } = await supabase.from('categories').select('*').eq('type', 'brand').eq('parent_id', subId).order('sort_order');
+    const { data: brandData, error } = await fetchCategories({ type: 'brand', parentId: subId });
     if (error) {
       console.error('Failed fetching brand matrix:', error.message);
       return;
@@ -161,13 +168,7 @@ export default function InventoryPage() {
   };
 
   const fetchProductsForBrand = async (brandId) => {
-    const { data: prodData, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('brand_id', brandId) 
-      .order('is_featured', { ascending: false }) 
-      .order('sort_order', { ascending: true })
-      .order('created_at', { ascending: false });
+    const { data: prodData, error } = await loadProductsForBrand(brandId);
     if (error) {
       console.error('Failed fetching products:', error.message);
       return;
@@ -177,21 +178,8 @@ export default function InventoryPage() {
 
   const handleGlobalSearch = async (query) => {
     setIsSearchingGlobally(true);
-    const pattern = searchIlikePattern(query);
-    if (!pattern) {
-      setGlobalSearchResults([]);
-      return;
-    }
-
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .or(`title.ilike.${pattern},sku_code.ilike.${pattern}`)
-      .order('is_featured', { ascending: false });
-
-    if (!error) {
-      setGlobalSearchResults(data || []);
-    }
+    const { data, error } = await searchProducts(query);
+    if (!error) setGlobalSearchResults(data || []);
   };
 
   const handleSelectSearchedProduct = async (product) => {
@@ -201,11 +189,11 @@ export default function InventoryPage() {
     setIsSearchingGlobally(false);
     setSelectedRoot(product.root_category_id);
     
-    const { data: subData } = await supabase.from('categories').select('*').eq('type', 'sub').eq('parent_id', product.root_category_id).order('sort_order');
+    const { data: subData } = await fetchCategories({ type: 'sub', parentId: product.root_category_id });
     setSubs(subData || []);
     setSelectedSub(product.sub_category_id);
 
-    const { data: brandData } = await supabase.from('categories').select('*').eq('type', 'brand').eq('parent_id', product.sub_category_id).order('sort_order');
+    const { data: brandData } = await fetchCategories({ type: 'brand', parentId: product.sub_category_id });
     setBrands(brandData || []);
     setSelectedBrand(product.brand_id);
 
@@ -235,6 +223,11 @@ export default function InventoryPage() {
 
   const handleDropOnItem = async (targetItem, currentArray, typeStr) => {
     if (!draggedItem || draggedItem.id === targetItem.id || draggedItem.type !== typeStr) return;
+    if (isDemoMode()) {
+      alert(DEMO_WRITE_MESSAGE);
+      setDraggedItem(null);
+      return;
+    }
 
     let localList = [...currentArray];
     const draggedIdx = localList.findIndex(i => i.id === draggedItem.id);
@@ -251,7 +244,7 @@ export default function InventoryPage() {
     setDraggedItem(null);
     
     if (typeStr === 'root') {
-      const { data } = await supabase.from('categories').select('*').eq('type', 'root').order('sort_order');
+      const { data } = await fetchCategories({ type: 'root' });
       setRoots(data || []);
     } else if (typeStr === 'sub') {
       await refreshSubColumn(selectedRoot, false);
@@ -312,7 +305,7 @@ export default function InventoryPage() {
 
   const handleModalRootChange = async (rootId) => {
     setModalRootId(rootId);
-    const { data: subData } = await supabase.from('categories').select('*').eq('type', 'sub').eq('parent_id', rootId).order('sort_order');
+    const { data: subData } = await fetchCategories({ type: 'sub', parentId: rootId });
     setModalSubsList(subData || []);
     setModalBrandsList([]);
     
@@ -325,14 +318,14 @@ export default function InventoryPage() {
     }));
 
     if (subData && subData.length > 0 && modalType === 'product') {
-      const { data: brandData } = await supabase.from('categories').select('*').eq('type', 'brand').eq('parent_id', subData[0].id).order('sort_order');
+      const { data: brandData } = await fetchCategories({ type: 'brand', parentId: subData[0].id });
       setModalBrandsList(brandData || []);
       setFormData(prev => ({ ...prev, sub_category_id: subData[0].id, brand_id: brandData?.[0]?.id || '' }));
     }
   };
 
   const handleModalSubChange = async (subId) => {
-    const { data: brandData } = await supabase.from('categories').select('*').eq('type', 'brand').eq('parent_id', subId).order('sort_order');
+    const { data: brandData } = await fetchCategories({ type: 'brand', parentId: subId });
     setModalBrandsList(brandData || []);
     
     setFormData(prev => ({ 
@@ -344,6 +337,10 @@ export default function InventoryPage() {
   };
 
   const openAddModal = async (type) => {
+    if (isDemoMode()) {
+      alert(DEMO_WRITE_MESSAGE);
+      return;
+    }
     setModalType(type); 
     setIsEditMode(false);
     setPendingStorageRemovals([]);
@@ -361,11 +358,11 @@ export default function InventoryPage() {
     });
 
     setModalRootId(selectedRoot || '');
-    const { data: subData } = await supabase.from('categories').select('*').eq('type', 'sub').eq('parent_id', selectedRoot).order('sort_order');
+    const { data: subData } = await fetchCategories({ type: 'sub', parentId: selectedRoot });
     setModalSubsList(subData || []);
 
     if (selectedSub) {
-      const { data: brandData } = await supabase.from('categories').select('*').eq('type', 'brand').eq('parent_id', selectedSub).order('sort_order');
+      const { data: brandData } = await fetchCategories({ type: 'brand', parentId: selectedSub });
       setModalBrandsList(brandData || []);
     } else {
       setModalBrandsList([]);
@@ -375,6 +372,10 @@ export default function InventoryPage() {
   };
 
   const openEditModal = async (type, item) => {
+    if (isDemoMode()) {
+      alert(DEMO_WRITE_MESSAGE);
+      return;
+    }
     setModalType(type); 
     setIsEditMode(true); 
     setEditingItem(item);
@@ -399,19 +400,25 @@ export default function InventoryPage() {
     }
 
     if (type === 'brand' && item.parent_id) {
-      const { data: parentSub } = await supabase.from('categories').select('parent_id').eq('id', item.parent_id).single();
+      const { data: parentSub } = await fetchCategoryById(item.parent_id);
       if (parentSub) {
         setModalRootId(parentSub.parent_id);
-        const { data: subData } = await supabase.from('categories').select('*').eq('type', 'sub').eq('parent_id', parentSub.parent_id).order('sort_order');
+        const { data: subData } = await fetchCategories({ type: 'sub', parentId: parentSub.parent_id });
         setModalSubsList(subData || []);
       }
     }
 
     if (type === 'product') {
       setModalRootId(item.root_category_id || selectedRoot || '');
-      const { data: subData } = await supabase.from('categories').select('*').eq('type', 'sub').eq('parent_id', item.root_category_id || selectedRoot).order('sort_order');
+      const { data: subData } = await fetchCategories({
+        type: 'sub',
+        parentId: item.root_category_id || selectedRoot,
+      });
       setModalSubsList(subData || []);
-      const { data: brandData = [] } = await supabase.from('categories').select('*').eq('type', 'brand').eq('parent_id', item.sub_category_id || selectedSub).order('sort_order');
+      const { data: brandData } = await fetchCategories({
+        type: 'brand',
+        parentId: item.sub_category_id || selectedSub,
+      });
       setModalBrandsList(brandData || []);
     }
 
@@ -427,6 +434,10 @@ export default function InventoryPage() {
 
   const handleSaveForm = async (e) => {
     e.preventDefault();
+    if (isDemoMode()) {
+      alert(DEMO_WRITE_MESSAGE);
+      return;
+    }
     setLoading(true);
 
     try {
@@ -523,7 +534,7 @@ export default function InventoryPage() {
       setIsModalOpen(false);
 
       if (modalType === 'root') {
-        const { data } = await supabase.from('categories').select('*').eq('type', 'root').order('sort_order');
+        const { data } = await fetchCategories({ type: 'root' });
         setRoots(data || []);
         if (!isEditMode && data && data.length > 0) await refreshSubColumn(selectedRoot || data[0].id, true);
       } else if (modalType === 'sub') {
@@ -545,6 +556,10 @@ export default function InventoryPage() {
 
   const toggleProductFeatured = async (product, e) => {
     e.stopPropagation();
+    if (isDemoMode()) {
+      alert(DEMO_WRITE_MESSAGE);
+      return;
+    }
     const nextState = !product.is_featured;
     const { error } = await supabase.from('products').update({ is_featured: nextState }).eq('id', product.id);
     if (!error) { 
@@ -562,6 +577,10 @@ export default function InventoryPage() {
   };
 
   const handleDeleteItem = async (type, id) => {
+    if (isDemoMode()) {
+      alert(DEMO_WRITE_MESSAGE);
+      return;
+    }
     if (confirm("Permanently drop item entry record?")) {
       let imageUrlsToRemove = [];
       if (type === 'product') {

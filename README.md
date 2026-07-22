@@ -44,10 +44,28 @@ Defaults favor Supabase free Storage (1 GB). Override with `NEXT_PUBLIC_*` env v
 
 Restart the dev server after changing env vars.
 
+## Demo mode (same app, different data source)
+
+One application. Flip storage with an env flag:
+
+| `NEXT_PUBLIC_DEMO_MODE` | Catalog data |
+|-------------------------|--------------|
+| `false` (default / prod) | Supabase |
+| `true` | Local `fixtures/demo-catalog.json` |
+
+Storefront and admin **reads** go through `lib/data.js`. In demo mode, catalog edits (inventory, connections, uploads) are blocked — no Supabase Storage/DB writes.
+
+1. `npm run demo:generate` (refresh fixtures + `public/demo/product.png`)
+2. Set `NEXT_PUBLIC_DEMO_MODE=true` in `.env.local`
+3. Restart `npm run dev`
+
+Set back to `false` for real production data.
+
 ## Scripts
 
 ```bash
 npm run dev
 npm run build
 npm start
+npm run demo:generate
 ```

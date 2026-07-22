@@ -5,11 +5,13 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
+import { isDemoMode } from '@/lib/data';
 import { User, LogOut, LayoutDashboard, Box, Link2, Menu, X } from 'lucide-react';
 
 export default function AdminLayoutWrapper({ children }) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const demoMode = isDemoMode();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -92,6 +94,13 @@ export default function AdminLayoutWrapper({ children }) {
           </button>
         </div>
       </nav>
+
+      {demoMode && (
+        <div className="w-full bg-amber-950/40 border-b border-amber-800/50 px-4 py-2 text-center text-[11px] text-amber-200/90">
+          Demo mode — catalog is local fixtures (read-only). Set{' '}
+          <code className="font-mono text-amber-100">NEXT_PUBLIC_DEMO_MODE=false</code> to use Supabase.
+        </div>
+      )}
 
       {/* --- Mobile Dropdown Panel Drawer Overlay --- */}
       {isMobileMenuOpen && (

@@ -1,4 +1,3 @@
-import { supabase } from '@/config/supabase';
 import { getProductImages } from '@/lib/product-images';
 import ProductImage from '@/app/components/ProductImage';
 import StorefrontFooter from '@/app/components/StorefrontFooter';
@@ -6,24 +5,20 @@ import { notFound } from 'next/navigation';
 import { ShieldAlert, ArrowLeft, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { fetchProductBySku, fetchProductSkuParams, isDemoMode } from '@/lib/data';
 
 export const revalidate = 600;
 
 export async function generateStaticParams() {
-  const { data } = await supabase.from('products').select('sku_code');
-  return (data || [])
-    .filter((p) => p.sku_code)
-    .map((p) => ({ id: p.sku_code.toLowerCase() }));
+  // Demo catalog is large — serve product pages on demand to keep builds fast.
+  if (isDemoMode()) return [];
+  return fetchProductSkuParams();
 }
 
 export default async function ProductDetailPage({ params }) {
   const { id } = await params;
 
-  const { data: product } = await supabase
-    .from('products')
-    .select('*')
-    .eq('sku_code', id.toUpperCase())
-    .single();
+  const { data: product } = await fetchProductBySku(id);
 
   if (!product) notFound();
 

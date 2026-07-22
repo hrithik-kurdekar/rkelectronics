@@ -4,6 +4,11 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { revalidateStorefront } from '@/app/actions/revalidate-storefront';
+import {
+  isDemoMode,
+  DEMO_WRITE_MESSAGE,
+  fetchConnections as loadConnections,
+} from '@/lib/data';
 import { Link2, Plus, Edit3, Trash2, X, Mail, Phone, MessageSquare, Globe, Inbox, AlertCircle } from 'lucide-react';
 import ErrorBanner from '@/app/components/ErrorBanner';
 
@@ -37,10 +42,7 @@ export default function ConnectionsPage() {
   }, []);
 
   const fetchConnections = async () => {
-    const { data, error } = await supabase
-      .from('connections')
-      .select('*')
-      .order('created_at', { ascending: true });
+    const { data, error } = await loadConnections();
     
     if (error) {
       setLoadError('Could not load contact connections. Please refresh the page.');
@@ -51,6 +53,10 @@ export default function ConnectionsPage() {
   };
 
   const openAddModal = (targetType) => {
+    if (isDemoMode()) {
+      alert(DEMO_WRITE_MESSAGE);
+      return;
+    }
     setIsEditMode(false);
     setEditingItem(null);
     setValidationError('');
@@ -64,6 +70,10 @@ export default function ConnectionsPage() {
   };
 
   const openEditModal = (item) => {
+    if (isDemoMode()) {
+      alert(DEMO_WRITE_MESSAGE);
+      return;
+    }
     setIsEditMode(true);
     setEditingItem(item);
     setValidationError('');
@@ -123,6 +133,10 @@ export default function ConnectionsPage() {
 
   const handleSaveForm = async (e) => {
     e.preventDefault();
+    if (isDemoMode()) {
+      setValidationError(DEMO_WRITE_MESSAGE);
+      return;
+    }
     if (!validateFormInputs()) return;
     
     setLoading(true);
@@ -165,6 +179,10 @@ export default function ConnectionsPage() {
   };
 
   const handleDeleteConnection = async (id) => {
+    if (isDemoMode()) {
+      alert(DEMO_WRITE_MESSAGE);
+      return;
+    }
     if (confirm("Are you sure you want to delete this communication entry?")) {
       const { error } = await supabase.from('connections').delete().eq('id', id);
       if (!error) {
@@ -175,6 +193,10 @@ export default function ConnectionsPage() {
   };
 
   const toggleConnectionStatus = async (item) => {
+    if (isDemoMode()) {
+      alert(DEMO_WRITE_MESSAGE);
+      return;
+    }
     const nextState = !item.is_active;
     const { error } = await supabase
       .from('connections')

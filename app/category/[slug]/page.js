@@ -1,11 +1,10 @@
-import { supabase } from '@/config/supabase';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Cpu, AlertCircle } from 'lucide-react';
 import ProductImage from '@/app/components/ProductImage';
 import StorefrontFooter from '@/app/components/StorefrontFooter';
 import { categoryNameFromSlug } from '@/lib/category-slug';
-import { PRODUCT_LIST_SELECT } from '@/lib/media-limits';
+import { fetchRootCategories, fetchProductsByRootId } from '@/lib/data';
 
 export const revalidate = 3600;
 
@@ -13,11 +12,7 @@ export default async function CategoryPage({ params }) {
   const { slug } = await params;
   const normalizedSlug = categoryNameFromSlug(slug);
 
-  const { data: roots, error: rootsError } = await supabase
-    .from('categories')
-    .select('*')
-    .eq('type', 'root')
-    .order('sort_order');
+  const { data: roots, error: rootsError } = await fetchRootCategories();
 
   if (rootsError) {
     return (
@@ -36,11 +31,7 @@ export default async function CategoryPage({ params }) {
 
   if (!category) notFound();
 
-  const { data: products, error: productsError } = await supabase
-    .from('products')
-    .select(PRODUCT_LIST_SELECT)
-    .eq('root_category_id', category.id)
-    .order('created_at', { ascending: false });
+  const { data: products, error: productsError } = await fetchProductsByRootId(category.id);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-600 flex flex-col">

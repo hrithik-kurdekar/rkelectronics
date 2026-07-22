@@ -1,8 +1,8 @@
 // app/admin/dashboard/page.js
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase/client';
 import { countProductsByCondition } from '@/lib/product-conditions';
+import { fetchProductConditions } from '@/lib/data';
 import ErrorBanner from '@/app/components/ErrorBanner';
 import { 
   Package, 
@@ -33,7 +33,7 @@ export default function AdminDashboard() {
 
   async function pullMetrics() {
     setRefreshing(true);
-    const { data, error } = await supabase.from('products').select('condition');
+    const { data, error } = await fetchProductConditions();
     if (error) {
       setMetricsError('Could not load dashboard metrics. Please try again.');
     } else {

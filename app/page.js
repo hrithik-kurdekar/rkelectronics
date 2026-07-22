@@ -1,50 +1,25 @@
 // app/page.js
-import { supabase } from '@/config/supabase';
 import Link from 'next/link';
 import { Cpu, ArrowRight, Layers, AlertCircle } from 'lucide-react';
 import ProductImage from '@/app/components/ProductImage';
 import StorefrontFooter from '@/app/components/StorefrontFooter';
 import { categorySlugFromName } from '@/lib/category-slug';
-import { PRODUCT_LIST_SELECT } from '@/lib/media-limits';
+import { fetchRootCategories, fetchHomeProducts, isDemoMode } from '@/lib/data';
 
 export const revalidate = 3600;
 export const dynamic = 'force-static';
 
 async function fetchStorefrontPayload() {
-  const { data: roots, error: rootsError } = await supabase
-    .from('categories')
-    .select('*')
-    .eq('type', 'root')
-    .order('sort_order');
+  const { data: roots, error: rootsError } = await fetchRootCategories();
+  const { featured, showingFeatured, error: productsError } = await fetchHomeProducts();
 
-  const { data: featuredRows, error: featuredError } = await supabase
-    .from('products')
-    .select(PRODUCT_LIST_SELECT)
-    .eq('is_featured', true)
-    .order('created_at', { ascending: false })
-    .limit(12);
-
-  let featured = featuredRows || [];
-  let showingFeatured = featured.length > 0;
-
-  if (!showingFeatured) {
-    const { data: latest, error: latestError } = await supabase
-      .from('products')
-      .select(PRODUCT_LIST_SELECT)
-      .order('created_at', { ascending: false })
-      .limit(12);
-    featured = latest || [];
-    if (latestError && !featuredError) {
-      return { roots: roots || [], featured: [], showingFeatured: false, error: latestError.message };
-    }
-  }
-
-  const error = rootsError?.message || featuredError?.message || null;
-  return { roots: roots || [], featured, showingFeatured, error };
+  const error = rootsError?.message || productsError?.message || null;
+  return { roots: roots || [], featured: featured || [], showingFeatured, error };
 }
 
 export default async function RKStorefrontHome() {
   const { roots, featured, showingFeatured, error } = await fetchStorefrontPayload();
+  const demo = isDemoMode();
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-600 flex flex-col">
@@ -55,7 +30,13 @@ export default async function RKStorefrontHome() {
             <span className="text-lg font-bold tracking-tight text-white uppercase">RK Electronics</span>
           </div>
           {!error && (
-            <span className="text-emerald-400 text-xs px-2.5 py-1 bg-emerald-500/5 border border-emerald-500/10 rounded-full font-mono">● database clean</span>
+            <span className={`text-xs px-2.5 py-1 border rounded-full font-mono ${
+              demo
+                ? 'text-amber-400 bg-amber-500/5 border-amber-500/20'
+                : 'text-emerald-400 bg-emerald-500/5 border-emerald-500/10'
+            }`}>
+              {demo ? '● demo catalog' : '● database clean'}
+            </span>
           )}
         </div>
       </header>
@@ -69,6 +50,14 @@ export default async function RKStorefrontHome() {
         </div>
       )}
 
+      {demo && (
+        <div className="max-w-7xl mx-auto px-6 pt-4">
+          <p className="text-xs text-amber-500/90 bg-amber-500/5 border border-amber-500/15 rounded-xl px-4 py-2">
+            Demo mode: catalog is loaded from local fixtures (not Supabase). Admin still uses your live project.
+          </p>
+        </div>
+      )}
+
       <section className="max-w-7xl mx-auto px-6 pt-16 pb-12 text-center space-y-4">
         <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-white max-w-3xl mx-auto leading-tight">
           Premium Grade Refurbished <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-indigo-500">Electronics</span>
@@ -79,11 +68,11 @@ export default async function RKStorefrontHome() {
         {roots.length === 0 ? (
           <p className="text-zinc-500 text-sm py-8 text-center">No categories yet.</p>
         ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-4xl mx-auto">
+        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4 max-w-6xl mx-auto max-h-[28rem] overflow-y-auto pr-1">
           {roots.map((root) => (
-            <Link key={root.id} href={`/category/${categorySlugFromName(root.name)}`} className="group p-6 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl flex flex-col items-center transition-all hover:border-blue-500/50">
-              <div className="w-14 h-14 bg-zinc-950 border border-zinc-800 group-hover:text-blue-400 rounded-full flex items-center justify-center mb-4"><Layers className="w-5 h-5" /></div>
-              <span className="text-sm font-bold text-zinc-200 group-hover:text-white">{root.name}</span>
+            <Link key={root.id} href={`/category/${categorySlugFromName(root.name)}`} className="group p-5 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl flex flex-col items-center transition-all hover:border-blue-500/50">
+              <div className="w-12 h-12 bg-zinc-950 border border-zinc-800 group-hover:text-blue-400 rounded-full flex items-center justify-center mb-3"><Layers className="w-5 h-5" /></div>
+              <span className="text-xs font-bold text-zinc-200 group-hover:text-white text-center line-clamp-2">{root.name}</span>
             </Link>
           ))}
         </div>
