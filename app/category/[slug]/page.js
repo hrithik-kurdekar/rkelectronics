@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Cpu, AlertCircle } from 'lucide-react';
 import ProductImage from '@/app/components/ProductImage';
 import StorefrontFooter from '@/app/components/StorefrontFooter';
 import { categoryNameFromSlug } from '@/lib/category-slug';
+import { PRODUCT_LIST_SELECT } from '@/lib/media-limits';
 
 export const revalidate = 3600;
 
@@ -37,7 +38,7 @@ export default async function CategoryPage({ params }) {
 
   const { data: products, error: productsError } = await supabase
     .from('products')
-    .select('*')
+    .select(PRODUCT_LIST_SELECT)
     .eq('root_category_id', category.id)
     .order('created_at', { ascending: false });
 

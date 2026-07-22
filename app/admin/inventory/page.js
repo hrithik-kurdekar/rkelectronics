@@ -6,10 +6,25 @@ import { supabase } from '@/lib/supabase/client';
 import { revalidateStorefront } from '@/app/actions/revalidate-storefront';
 import { CONDITION_FILTER_OPTIONS } from '@/lib/product-conditions';
 import { searchIlikePattern } from '@/lib/search-query';
+import {
+  getMediaLimits,
+  storagePathFromPublicUrl,
+  truncateText,
+} from '@/lib/media-limits';
+import { compressImageToWebp } from '@/lib/compress-image';
 import { Star, Edit3, Trash2, X, ImagePlus, Inbox, GripVertical, AlertCircle, Search, Filter, Plus } from 'lucide-react';
 import ErrorBanner from '@/app/components/ErrorBanner';
 
 const BUCKET_NAME = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || 'product-media';
+const MEDIA_LIMITS = getMediaLimits();
+
+async function removeStorageUrls(urls) {
+  const paths = (urls || [])
+    .map((url) => storagePathFromPublicUrl(url, BUCKET_NAME))
+    .filter(Boolean);
+  if (!paths.length) return;
+  await supabase.storage.from(BUCKET_NAME).remove(paths);
+}
 
 export default function InventoryPage() {
   // --- Hierarchy Matrices ---
@@ -43,6 +58,7 @@ export default function InventoryPage() {
   const [editingItem, setEditingItem] = useState(null);
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState(null);
+  const [pendingStorageRemovals, setPendingStorageRemovals] = useState([]);
 
   // --- Product Detailed View Dialog State ---
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -244,84 +260,46 @@ export default function InventoryPage() {
     }
   };
 
-  // Hardened 1:1 Omnidirectional Center-Square Auto-Cropping Compressor
-  const compressImageToWebp = (file) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = (event) => {
-        const img = new Image();
-        img.src = event.target.result;
-        img.onload = () => {
-          const canvas = document.createElement('canvas');
-          
-          // Force locked standard dimensions for desktop & mobile optimization
-          const TARGET_SIZE = 800; 
-          canvas.width = TARGET_SIZE;
-          canvas.height = TARGET_SIZE;
-
-          // Calculate offset variables for a clean center crop boundary matrix
-          let sourceX = 0;
-          let sourceY = 0;
-          let sourceSize = Math.min(img.width, img.height);
-
-          if (img.width > img.height) {
-            sourceX = Math.round((img.width - img.height) / 2);
-          } else if (img.height > img.width) {
-            sourceY = Math.round((img.height - img.width) / 2);
-          }
-
-          const ctx = canvas.getContext('2d');
-          // Map cropped space onto output bounds seamlessly
-          ctx.drawImage(
-            img, 
-            sourceX, sourceY, sourceSize, sourceSize, 
-            0, 0, TARGET_SIZE, TARGET_SIZE
-          );
-
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                const optimizedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".webp", {
-                  type: 'image/webp',
-                  lastModified: Date.now(),
-                });
-                resolve(optimizedFile);
-              } else {
-                reject(new Error("Canvas cropping failure."));
-              }
-            },
-            'image/webp',
-            0.82 
-          );
-        };
-      };
-      reader.onerror = (err) => reject(err);
-    });
-  };
+  // Image compression lives in lib/compress-image.js (uses MEDIA_LIMITS)
 
   const handleMultipleImagesUpload = (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
 
-    const uploadedSlots = files.map(file => ({
+    const remainingSlots = MEDIA_LIMITS.productMaxImages - formData.photos.length;
+    if (remainingSlots <= 0) {
+      alert(`Maximum ${MEDIA_LIMITS.productMaxImages} images per product.`);
+      e.target.value = '';
+      return;
+    }
+
+    const accepted = files.slice(0, remainingSlots);
+    if (files.length > remainingSlots) {
+      alert(`Only ${remainingSlots} more image(s) allowed (max ${MEDIA_LIMITS.productMaxImages}).`);
+    }
+
+    const uploadedSlots = accepted.map((file) => ({
       file,
       preview: URL.createObjectURL(file),
-      url: ''
+      url: '',
     }));
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      photos: [...prev.photos, ...uploadedSlots]
+      photos: [...prev.photos, ...uploadedSlots],
     }));
+    e.target.value = '';
   };
 
   const removePhotoSlot = (index) => {
     const targetPhoto = formData.photos[index];
-    if (targetPhoto && targetPhoto.preview && targetPhoto.preview.startsWith('blob:')) {
+    if (targetPhoto?.preview?.startsWith('blob:')) {
       URL.revokeObjectURL(targetPhoto.preview);
     }
-    setFormData(prev => ({ ...prev, photos: prev.photos.filter((_, i) => i !== index) }));
+    if (targetPhoto?.url) {
+      setPendingStorageRemovals((prev) => [...prev, targetPhoto.url]);
+    }
+    setFormData((prev) => ({ ...prev, photos: prev.photos.filter((_, i) => i !== index) }));
   };
 
   const clearModalPhotoPreviews = () => {
@@ -368,6 +346,7 @@ export default function InventoryPage() {
   const openAddModal = async (type) => {
     setModalType(type); 
     setIsEditMode(false);
+    setPendingStorageRemovals([]);
     
     let defaultParent = null;
     if (type === 'sub') defaultParent = selectedRoot;
@@ -399,6 +378,7 @@ export default function InventoryPage() {
     setModalType(type); 
     setIsEditMode(true); 
     setEditingItem(item);
+    setPendingStorageRemovals([]);
     
     setFormData({
       name: item.name || item.title || '',
@@ -467,21 +447,25 @@ export default function InventoryPage() {
           if (modalType === 'brand') setSelectedBrand(insertedData.id);
         }
       } else {
-        let uploadedUrls = formData.photos.filter(p => p.url).map(p => p.url);
-        const pendingUploadSlots = formData.photos.filter(p => p.file);
+        let uploadedUrls = formData.photos.filter((p) => p.url).map((p) => p.url);
+        const pendingUploadSlots = formData.photos.filter((p) => p.file);
+
+        if (uploadedUrls.length + pendingUploadSlots.length > MEDIA_LIMITS.productMaxImages) {
+          throw new Error(`Maximum ${MEDIA_LIMITS.productMaxImages} images per product.`);
+        }
 
         if (pendingUploadSlots.length > 0) {
-          const uploadPromises = pendingUploadSlots.map(async (photo, index) => {
-            const compressedFileBlob = await compressImageToWebp(photo.file);
+          const uploadPromises = pendingUploadSlots.map(async (photo) => {
+            const compressedFileBlob = await compressImageToWebp(photo.file, MEDIA_LIMITS);
             const filename = `${crypto.randomUUID()}.webp`;
-            
+
             const { error: uploadError } = await supabase.storage
               .from(BUCKET_NAME)
-              .upload(filename, compressedFileBlob, { 
+              .upload(filename, compressedFileBlob, {
                 contentType: 'image/webp',
-                cacheControl: '3600'
+                cacheControl: '3600',
               });
-              
+
             if (uploadError) throw uploadError;
 
             const { data: publicUrlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(filename);
@@ -492,15 +476,24 @@ export default function InventoryPage() {
           uploadedUrls = [...uploadedUrls, ...newUrls];
         }
 
-        const generatedSku = isEditMode ? editingItem.sku_code : `SKU-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
+        const previousUrls = isEditMode ? editingItem?.image_urls || [] : [];
+        const orphanedUrls = previousUrls.filter((url) => !uploadedUrls.includes(url));
+        const urlsToDelete = [...new Set([...pendingStorageRemovals, ...orphanedUrls])];
+
+        const generatedSku = isEditMode
+          ? editingItem.sku_code
+          : `SKU-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
         const productPayload = {
           title: formData.name,
           sku_code: generatedSku,
-          description: formData.description || null,
+          description: truncateText(formData.description, MEDIA_LIMITS.descriptionMaxLength),
           price: parseFloat(formData.price) || 0,
           condition: formData.condition,
-          defect_notes: formData.condition !== 'New' ? formData.defect_notes : null,
+          defect_notes:
+            formData.condition !== 'New'
+              ? truncateText(formData.defect_notes, MEDIA_LIMITS.defectNotesMaxLength)
+              : null,
           is_featured: formData.is_featured,
           image_urls: uploadedUrls,
           root_category_id: formData.root_category_id || selectedRoot,
@@ -511,7 +504,7 @@ export default function InventoryPage() {
         if (isEditMode) {
           const { error } = await supabase.from('products').update(productPayload).eq('id', editingItem.id);
           if (error) throw error;
-          
+
           if (viewingProduct && viewingProduct.id === editingItem.id) {
             setViewingProduct({ ...viewingProduct, ...productPayload });
           }
@@ -519,6 +512,11 @@ export default function InventoryPage() {
           const { error: insertError } = await supabase.from('products').insert([productPayload]);
           if (insertError) throw insertError;
         }
+
+        if (urlsToDelete.length > 0) {
+          await removeStorageUrls(urlsToDelete);
+        }
+        setPendingStorageRemovals([]);
       }
 
       clearModalPhotoPreviews();
@@ -565,11 +563,25 @@ export default function InventoryPage() {
 
   const handleDeleteItem = async (type, id) => {
     if (confirm("Permanently drop item entry record?")) {
+      let imageUrlsToRemove = [];
+      if (type === 'product') {
+        const { data: existing } = await supabase
+          .from('products')
+          .select('image_urls')
+          .eq('id', id)
+          .single();
+        imageUrlsToRemove = existing?.image_urls || [];
+      }
+
       const table = type === 'product' ? 'products' : 'categories';
       const { error } = await supabase.from(table).delete().eq('id', id);
       if (error) {
         alert(`Deletion Failed: ${error.message}`);
         return;
+      }
+
+      if (type === 'product' && imageUrlsToRemove.length > 0) {
+        await removeStorageUrls(imageUrlsToRemove);
       }
       
       if (type === 'product' && viewingProduct?.id === id) {
@@ -1148,14 +1160,39 @@ export default function InventoryPage() {
                   </div>
 
                   <div>
-                    <label className="text-[9px] font-extrabold tracking-wider uppercase text-zinc-400 block mb-1">Product Description</label>
-                    <textarea rows={2} value={formData.description} onChange={(e) => setFormData({...formData, description: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800/80 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 resize-none placeholder-zinc-700" placeholder="Provide product feature entry context logs..."/>
+                    <label className="text-[9px] font-extrabold tracking-wider uppercase text-zinc-400 block mb-1">
+                      Product Description
+                      <span className="ml-1 font-mono text-zinc-600 normal-case tracking-normal">
+                        ({(formData.description || '').length}/{MEDIA_LIMITS.descriptionMaxLength})
+                      </span>
+                    </label>
+                    <textarea
+                      rows={2}
+                      maxLength={MEDIA_LIMITS.descriptionMaxLength}
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      className="w-full bg-zinc-950 border border-zinc-800/80 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 resize-none placeholder-zinc-700"
+                      placeholder="Provide product feature entry context logs..."
+                    />
                   </div>
 
                   {formData.condition !== 'New' && (
                     <div>
-                      <label className="text-[9px] font-extrabold tracking-wider uppercase text-amber-400 block mb-1">Defect Logs</label>
-                      <textarea rows={2} required value={formData.defect_notes} onChange={(e) => setFormData({...formData, defect_notes: e.target.value})} className="w-full bg-zinc-950 border border-amber-900/30 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-700 resize-none placeholder-amber-950/50" placeholder="State structural or physical breakdown defects..."/>
+                      <label className="text-[9px] font-extrabold tracking-wider uppercase text-amber-400 block mb-1">
+                        Defect Logs
+                        <span className="ml-1 font-mono text-amber-700/80 normal-case tracking-normal">
+                          ({(formData.defect_notes || '').length}/{MEDIA_LIMITS.defectNotesMaxLength})
+                        </span>
+                      </label>
+                      <textarea
+                        rows={2}
+                        required
+                        maxLength={MEDIA_LIMITS.defectNotesMaxLength}
+                        value={formData.defect_notes}
+                        onChange={(e) => setFormData({ ...formData, defect_notes: e.target.value })}
+                        className="w-full bg-zinc-950 border border-amber-900/30 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-700 resize-none placeholder-amber-950/50"
+                        placeholder="State structural or physical breakdown defects..."
+                      />
                     </div>
                   )}
 
@@ -1166,7 +1203,12 @@ export default function InventoryPage() {
                   
                   <div className="space-y-1.5">
                     <div className="border-b border-zinc-800 pb-1">
-                      <label className="text-[9px] font-extrabold tracking-wider uppercase text-zinc-400 block">Product Media Workspace Array</label>
+                      <label className="text-[9px] font-extrabold tracking-wider uppercase text-zinc-400 block">
+                        Product images ({formData.photos.length}/{MEDIA_LIMITS.productMaxImages})
+                        <span className="ml-1 font-normal normal-case tracking-normal text-zinc-600">
+                          {MEDIA_LIMITS.imageMaxEdge}px WebP @ {MEDIA_LIMITS.imageWebpQuality}
+                        </span>
+                      </label>
                     </div>
                     
                     <div className="grid grid-cols-5 gap-2">
@@ -1177,11 +1219,13 @@ export default function InventoryPage() {
                         </div>
                       ))}
 
-                      <label className="cursor-pointer aspect-square border border-dashed border-zinc-800 hover:border-zinc-600 rounded-lg flex flex-col items-center justify-center bg-zinc-950/40 text-zinc-500 hover:text-zinc-300 transition">
-                        <ImagePlus className="w-4 h-4 mb-0.5" />
-                        <span className="text-[8px] font-bold uppercase tracking-wider">Upload</span>
-                        <input type="file" accept="image/*" multiple className="hidden" onChange={handleMultipleImagesUpload} />
-                      </label>
+                      {formData.photos.length < MEDIA_LIMITS.productMaxImages && (
+                        <label className="cursor-pointer aspect-square border border-dashed border-zinc-800 hover:border-zinc-600 rounded-lg flex flex-col items-center justify-center bg-zinc-950/40 text-zinc-500 hover:text-zinc-300 transition">
+                          <ImagePlus className="w-4 h-4 mb-0.5" />
+                          <span className="text-[8px] font-bold uppercase tracking-wider">Upload</span>
+                          <input type="file" accept="image/*" multiple className="hidden" onChange={handleMultipleImagesUpload} />
+                        </label>
+                      )}
                     </div>
                   </div>
                 </>
@@ -1189,7 +1233,7 @@ export default function InventoryPage() {
             </div>
 
             <div className="flex justify-end gap-2 mt-4 pt-2.5 border-t border-zinc-800 flex-shrink-0">
-              <button type="button" onClick={() => { clearModalPhotoPreviews(); setIsModalOpen(false); }} className="px-3 py-1.5 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg transition">Dismiss</button>
+              <button type="button" onClick={() => { clearModalPhotoPreviews(); setPendingStorageRemovals([]); setIsModalOpen(false); }} className="px-3 py-1.5 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg transition">Dismiss</button>
               <button type="submit" disabled={loading} className="px-3 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition disabled:opacity-50">
                 {loading ? 'Processing...' : 'Save Layout'}
               </button>

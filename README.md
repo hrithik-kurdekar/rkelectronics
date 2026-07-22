@@ -25,9 +25,24 @@ where email = 'YOUR_EMAIL@example.com';
 ```
 
 6. Add Turnstile **secret** in Supabase Auth captcha settings
-7. Run `npm run dev` → http://localhost:3000
+7. Optionally tune free-tier media limits in `.env.local` (see `.env.example`)
+8. Run `npm run dev` → http://localhost:3000
 
 Admin login: `/backend-portal-gateway-rk`
+
+## Free-tier media limits
+
+Defaults favor Supabase free Storage (1 GB). Override with `NEXT_PUBLIC_*` env vars:
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `NEXT_PUBLIC_IMAGE_MAX_EDGE` | `600` | Square WebP size (px) |
+| `NEXT_PUBLIC_IMAGE_WEBP_QUALITY` | `0.65` | WebP quality (0.3–1) |
+| `NEXT_PUBLIC_PRODUCT_MAX_IMAGES` | `2` | Max images per product |
+| `NEXT_PUBLIC_DESCRIPTION_MAX_LENGTH` | `500` | Description char cap |
+| `NEXT_PUBLIC_DEFECT_NOTES_MAX_LENGTH` | `300` | Defect notes char cap |
+
+Restart the dev server after changing env vars.
 
 ## Scripts
 
