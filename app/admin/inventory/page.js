@@ -25,6 +25,97 @@ import ErrorBanner from '@/app/components/ErrorBanner';
 const BUCKET_NAME = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || 'product-media';
 const MEDIA_LIMITS = getMediaLimits();
 
+/** Collapsed icon → expands left over header without shifting the title. */
+function ExpandableColumnSearch({
+  open,
+  onOpen,
+  onClose,
+  value,
+  onChange,
+  placeholder,
+  wide = false,
+  activeHint = false,
+  trailing = null,
+}) {
+  const wrapRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    if (open) {
+      const t = requestAnimationFrame(() => inputRef.current?.focus());
+      return () => cancelAnimationFrame(t);
+    }
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPointerDown = (event) => {
+      if (wrapRef.current && !wrapRef.current.contains(event.target)) {
+        if (!value && !activeHint) onClose();
+      }
+    };
+    document.addEventListener('mousedown', onPointerDown);
+    return () => document.removeEventListener('mousedown', onPointerDown);
+  }, [open, value, activeHint, onClose]);
+
+  const handleClearOrClose = () => {
+    if (value) {
+      onChange('');
+      return;
+    }
+    onClose();
+  };
+
+  return (
+    <div ref={wrapRef} className={`relative h-8 w-8 flex-shrink-0 ${open ? 'z-20' : 'z-10'}`}>
+      <button
+        type="button"
+        onClick={onOpen}
+        className={`h-8 w-8 rounded-md border bg-zinc-950 flex items-center justify-center transition ${
+          open ? 'opacity-0 pointer-events-none' : 'opacity-100'
+        } ${
+          value || activeHint
+            ? 'border-orange-500/40 text-orange-400'
+            : 'border-zinc-800 text-zinc-400 hover:text-zinc-200'
+        }`}
+        title="Search"
+        aria-label="Open search"
+      >
+        <Search className="w-3.5 h-3.5" />
+      </button>
+
+      <div
+        className={`absolute right-0 top-0 h-8 overflow-hidden origin-right transition-[width,opacity] duration-200 ease-out ${
+          open
+            ? `${wide ? 'w-[min(18rem,calc(100vw-7rem))] md:w-64' : 'w-[min(12.5rem,calc(100vw-7rem))] md:w-48'} opacity-100`
+            : 'w-8 opacity-0 pointer-events-none'
+        }`}
+      >
+        <div className="flex items-center gap-1 w-full h-full bg-zinc-950 border border-zinc-700 rounded-md shadow-xl pl-2 pr-1">
+          <Search className="w-3 h-3 text-zinc-500 flex-shrink-0" />
+          <input
+            ref={inputRef}
+            type="text"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            placeholder={placeholder}
+            className="flex-1 min-w-0 bg-transparent text-[11px] text-zinc-200 placeholder-zinc-600 focus:outline-none h-full"
+          />
+          {trailing}
+          <button
+            type="button"
+            onClick={handleClearOrClose}
+            className="h-6 w-6 flex-shrink-0 flex items-center justify-center rounded text-zinc-500 hover:text-zinc-200"
+            aria-label={value ? 'Clear search' : 'Close search'}
+          >
+            <X className="w-3 h-3" />
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 async function removeStorageUrls(urls) {
   const paths = (urls || [])
     .map((url) => storagePathFromPublicUrl(url, BUCKET_NAME))
@@ -58,6 +149,7 @@ export default function InventoryPage() {
   const [isFilterDropdownOpen, setIsFilterDropdownOpen] = useState(false);
   const [globalSearchResults, setGlobalSearchResults] = useState([]);
   const [isSearchingGlobally, setIsSearchingGlobally] = useState(false);
+  const [openSearch, setOpenSearch] = useState(null); // 'root' | 'sub' | 'brand' | 'product'
   
   const dropdownRef = useRef(null);
 
@@ -659,28 +751,17 @@ export default function InventoryPage() {
     return item.condition === conditionFilter;
   });
 
-  const renderColumnSearch = (value, onChange, placeholder) => (
-    <div className="relative flex-1 min-w-[4.5rem] mx-1 max-w-full">
-      <Search className="w-3 h-3 text-zinc-500 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
-      <input
-        type="text"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-full h-8 bg-zinc-950 text-[11px] text-zinc-200 pl-7 pr-7 border border-zinc-800 rounded-md placeholder-zinc-600 focus:outline-none focus:border-zinc-600 transition"
-      />
-      {value ? (
-        <button
-          type="button"
-          onClick={() => onChange('')}
-          className="absolute right-1.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 p-0.5"
-          aria-label="Clear search"
-        >
-          <X className="w-3 h-3" />
-        </button>
-      ) : null}
-    </div>
-  );
+  const rootSearchOpen = openSearch === 'root' || Boolean(rootFilter);
+  const subSearchOpen = openSearch === 'sub' || Boolean(subFilter);
+  const brandSearchOpen = openSearch === 'brand' || Boolean(brandFilter);
+  const productSearchOpen =
+    openSearch === 'product' || Boolean(searchQuery) || productSearchScope === 'all';
+
+  const closeProductSearch = () => {
+    setSearchQuery('');
+    if (selectedBrand) setProductSearchScope('brand');
+    setOpenSearch(null);
+  };
 
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden">
@@ -707,10 +788,20 @@ export default function InventoryPage() {
 
       {/* Column 1: Roots */}
       <div className={`col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'roots' ? 'flex' : 'hidden md:flex'}`}>
-        <div className="h-8 mb-2.5 flex items-center gap-1 px-0.5 flex-shrink-0 w-full min-w-0">
-          <h3 className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex-shrink-0">Roots</h3>
-          {renderColumnSearch(rootFilter, setRootFilter, 'Filter…')}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
+        <div className="relative h-8 mb-2.5 flex items-center justify-between gap-2 px-0.5 flex-shrink-0 w-full min-w-0">
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex-shrink-0 relative z-0">Roots</h3>
+          <div className="flex items-center gap-1.5 flex-shrink-0 relative z-10">
+            <ExpandableColumnSearch
+              open={rootSearchOpen}
+              onOpen={() => setOpenSearch('root')}
+              onClose={() => {
+                setRootFilter('');
+                setOpenSearch(null);
+              }}
+              value={rootFilter}
+              onChange={setRootFilter}
+              placeholder="Filter…"
+            />
             <span className="bg-emerald-950 text-emerald-400 px-1.5 rounded text-[10px] font-mono h-8 min-w-8 flex items-center justify-center border border-emerald-900/30">{filteredRoots.length}</span>
             <button onClick={() => openAddModal('root')} className="h-8 w-8 flex items-center justify-center rounded bg-emerald-950/60 hover:bg-emerald-900 text-emerald-400 border border-emerald-800/40 transition" title="Add Root">
               <Plus className="w-4 h-4" />
@@ -742,10 +833,20 @@ export default function InventoryPage() {
 
       {/* Column 2: Subs */}
       <div className={`col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'subs' ? 'flex' : 'hidden md:flex'}`}>
-        <div className="h-8 mb-2.5 flex items-center gap-1 px-0.5 flex-shrink-0 w-full min-w-0">
-          <h3 className="text-[11px] font-bold uppercase tracking-wider text-blue-400 flex-shrink-0">Subs</h3>
-          {renderColumnSearch(subFilter, setSubFilter, 'Filter…')}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
+        <div className="relative h-8 mb-2.5 flex items-center justify-between gap-2 px-0.5 flex-shrink-0 w-full min-w-0">
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-blue-400 flex-shrink-0 relative z-0">Subs</h3>
+          <div className="flex items-center gap-1.5 flex-shrink-0 relative z-10">
+            <ExpandableColumnSearch
+              open={subSearchOpen}
+              onOpen={() => setOpenSearch('sub')}
+              onClose={() => {
+                setSubFilter('');
+                setOpenSearch(null);
+              }}
+              value={subFilter}
+              onChange={setSubFilter}
+              placeholder="Filter…"
+            />
             <span className="bg-blue-950 text-blue-400 px-1.5 rounded text-[10px] font-mono h-8 min-w-8 flex items-center justify-center border border-blue-900/30">{filteredSubs.length}</span>
             <button disabled={!selectedRoot} onClick={() => openAddModal('sub')} className="h-8 w-8 flex items-center justify-center rounded bg-blue-950/60 hover:bg-blue-900 text-blue-400 border border-blue-800/40 disabled:opacity-20 disabled:hover:bg-blue-950/60 transition" title="Add Sub Category">
               <Plus className="w-4 h-4" />
@@ -779,10 +880,20 @@ export default function InventoryPage() {
 
       {/* Column 3: Brands */}
       <div className={`col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'brands' ? 'flex' : 'hidden md:flex'}`}>
-        <div className="h-8 mb-2.5 flex items-center gap-1 px-0.5 flex-shrink-0 w-full min-w-0">
-          <h3 className="text-[11px] font-bold uppercase tracking-wider text-purple-400 flex-shrink-0">Brands</h3>
-          {renderColumnSearch(brandFilter, setBrandFilter, 'Filter…')}
-          <div className="flex items-center gap-1.5 flex-shrink-0">
+        <div className="relative h-8 mb-2.5 flex items-center justify-between gap-2 px-0.5 flex-shrink-0 w-full min-w-0">
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-purple-400 flex-shrink-0 relative z-0">Brands</h3>
+          <div className="flex items-center gap-1.5 flex-shrink-0 relative z-10">
+            <ExpandableColumnSearch
+              open={brandSearchOpen}
+              onOpen={() => setOpenSearch('brand')}
+              onClose={() => {
+                setBrandFilter('');
+                setOpenSearch(null);
+              }}
+              value={brandFilter}
+              onChange={setBrandFilter}
+              placeholder="Filter…"
+            />
             <span className="bg-purple-950 text-purple-400 px-1.5 rounded text-[10px] font-mono h-8 min-w-8 flex items-center justify-center border border-purple-900/30">{filteredBrands.length}</span>
             <button disabled={!selectedSub} onClick={() => openAddModal('brand')} className="h-8 w-8 flex items-center justify-center rounded bg-purple-950/60 hover:bg-purple-900 text-purple-400 border border-purple-800/40 disabled:opacity-20 disabled:hover:bg-purple-950/60 transition" title="Add Brand Context">
               <Plus className="w-4 h-4" />
@@ -818,44 +929,50 @@ export default function InventoryPage() {
       <div className={`col-span-1 md:col-span-4 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'products' ? 'flex' : 'hidden md:flex'}`}>
         
         {/* Header Controls Line */}
-        <div className="h-8 mb-2.5 flex items-center gap-1 px-0.5 flex-shrink-0 select-none w-full min-w-0">
-          <h3 className="text-[11px] font-bold uppercase tracking-wider text-orange-400 whitespace-nowrap flex-shrink-0">
+        <div className="relative h-8 mb-2.5 flex items-center justify-between gap-2 px-0.5 flex-shrink-0 select-none w-full min-w-0">
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-orange-400 whitespace-nowrap flex-shrink-0 relative z-0">
             <span className="md:hidden">Prod</span>
             <span className="hidden md:inline">Products</span>
           </h3>
 
-          {renderColumnSearch(
-            searchQuery,
-            setSearchQuery,
-            productSearchScope === 'all' ? 'All…' : 'Brand…'
-          )}
-
-          <button
-            type="button"
-            onClick={() => {
-              if (productSearchScope === 'all') {
-                if (selectedBrand) setProductSearchScope('brand');
-              } else {
-                setProductSearchScope('all');
+          <div className="flex items-center gap-1.5 flex-shrink-0 relative z-10">
+            <ExpandableColumnSearch
+              open={productSearchOpen}
+              onOpen={() => setOpenSearch('product')}
+              onClose={closeProductSearch}
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={productSearchScope === 'all' ? 'All products…' : 'In brand…'}
+              wide
+              activeHint={productSearchScope === 'all'}
+              trailing={
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (productSearchScope === 'all') {
+                      if (selectedBrand) setProductSearchScope('brand');
+                    } else {
+                      setProductSearchScope('all');
+                    }
+                  }}
+                  disabled={productSearchScope === 'all' && !selectedBrand}
+                  aria-pressed={productSearchScope === 'all'}
+                  className={`h-6 px-1.5 flex-shrink-0 rounded border text-[9px] font-bold uppercase tracking-wide transition disabled:opacity-30 ${
+                    productSearchScope === 'all'
+                      ? 'border-orange-500/50 bg-orange-950/60 text-orange-400'
+                      : 'border-zinc-700 bg-zinc-900 text-zinc-500 hover:text-zinc-300'
+                  }`}
+                  title={
+                    productSearchScope === 'all'
+                      ? 'All products search is on — click for this brand only'
+                      : 'Search this brand only — click for all products'
+                  }
+                >
+                  All
+                </button>
               }
-            }}
-            disabled={productSearchScope === 'all' && !selectedBrand}
-            aria-pressed={productSearchScope === 'all'}
-            className={`h-8 px-2 flex-shrink-0 rounded-md border text-[9px] font-bold uppercase tracking-wide transition disabled:opacity-30 ${
-              productSearchScope === 'all'
-                ? 'border-orange-500/50 bg-orange-950/50 text-orange-400'
-                : 'border-zinc-800 bg-zinc-950 text-zinc-500 hover:text-zinc-300'
-            }`}
-            title={
-              productSearchScope === 'all'
-                ? 'All products search is on — click to search this brand only'
-                : 'Search this brand only — click to search all products'
-            }
-          >
-            All
-          </button>
+            />
 
-          <div className="flex items-center gap-1.5 flex-shrink-0">
             <div className="relative flex-shrink-0" ref={dropdownRef}>
               <button
                 type="button"
