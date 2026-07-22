@@ -25,7 +25,7 @@ import ErrorBanner from '@/app/components/ErrorBanner';
 const BUCKET_NAME = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || 'product-media';
 const MEDIA_LIMITS = getMediaLimits();
 
-/** Collapsed icon → expands left into a flex-1 host without shifting sibling actions. */
+/** Collapsed icon at the right → expands left over the full header row. */
 function ExpandableColumnSearch({
   open,
   onOpen,
@@ -35,8 +35,6 @@ function ExpandableColumnSearch({
   placeholder,
   activeHint = false,
   scopeToggle = null,
-  /** Fixed rem width when expanded on xl2+ (avoid w-full→max-w flash). */
-  desktopWidthClass = 'xl2:w-[11rem]',
 }) {
   const wrapRef = useRef(null);
   const inputRef = useRef(null);
@@ -106,7 +104,7 @@ function ExpandableColumnSearch({
       ref={wrapRef}
       onTransitionEnd={handlePanelTransitionEnd}
       className={`absolute top-0 right-0 h-8 overflow-hidden origin-right transition-[width] duration-200 ease-in-out ${
-        visualOpen ? `w-full ${desktopWidthClass} z-20` : 'w-8 z-10'
+        visualOpen ? 'w-full z-30' : 'w-8 z-10'
       }`}
     >
       <button
@@ -126,7 +124,7 @@ function ExpandableColumnSearch({
       </button>
 
       <div
-        className={`box-border flex items-stretch w-full h-8 rounded-md border border-zinc-800 bg-zinc-950 overflow-hidden transition-opacity duration-200 ${
+        className={`box-border flex items-stretch w-full h-8 rounded-md border border-zinc-800 bg-zinc-950 shadow-lg overflow-hidden transition-opacity duration-200 ${
           visualOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
       >
@@ -261,7 +259,7 @@ export default function InventoryPage() {
   useEffect(() => {
     if (productSearchScope === 'all' && searchQuery.trim().length > 0) {
       handleGlobalSearch(searchQuery);
-      if (typeof window !== 'undefined' && window.matchMedia('(max-width: 1599px)').matches) {
+      if (typeof window !== 'undefined' && window.matchMedia('(max-width: 899px)').matches) {
         setActiveTab('products');
       }
     } else {
@@ -930,9 +928,9 @@ export default function InventoryPage() {
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden">
       <ErrorBanner message={loadError} onDismiss={() => setLoadError(null)} className="mx-4 mt-2 shrink-0" />
-    <div className="flex-1 min-h-0 w-full p-4 flex flex-col xl2:grid xl2:grid-cols-10 xl2:grid-rows-1 gap-4 items-stretch overflow-hidden select-none relative">
+    <div className="flex-1 min-h-0 w-full p-2 sm:p-3 flex flex-col xl2:flex-row gap-2 xl2:gap-3 items-stretch overflow-hidden select-none relative">
       
-      {/* Sticky Mobile Navigation Controls Wrapper Layer */}
+      {/* Sticky Mobile Navigation Controls Wrapper Layer (< 900px) */}
       <div className="z-30 col-span-1 xl2:hidden flex shrink-0 border border-zinc-800 bg-zinc-950 p-1 rounded-xl gap-1 h-11 items-center w-full shadow-lg">
         {['roots', 'subs', 'brands', 'products'].map((tab) => (
           <button
@@ -951,28 +949,28 @@ export default function InventoryPage() {
       </div>
 
       {/* Column 1: Roots */}
-      <div className={`col-span-1 xl2:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'roots' ? 'flex' : 'hidden xl2:flex'}`}>
+      <div className={`bg-zinc-900 border border-zinc-800 rounded-xl p-2 xl2:p-2.5 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full min-w-0 xl2:max-w-[18rem] xl2:basis-0 justify-start items-stretch ${activeTab === 'roots' ? 'flex' : 'hidden xl2:flex'}`}>
         <div className="relative h-8 mb-2.5 flex items-center gap-1.5 px-0.5 flex-shrink-0 w-full min-w-0">
           <h3 className="hidden xl2:block text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex-shrink-0">Roots</h3>
-          <div className="relative flex-1 min-w-0 h-8">
-            <ExpandableColumnSearch
-              open={rootSearchOpen}
-              onOpen={() => setOpenSearch('root')}
-              onClose={() => {
-                setRootFilter('');
-                setOpenSearch(null);
-              }}
-              value={rootFilter}
-              onChange={setRootFilter}
-              placeholder="Filter…"
-            />
-          </div>
+          <div className="flex-1 min-w-0" />
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <span className="box-border bg-emerald-950 text-emerald-400 px-1.5 rounded text-[10px] font-mono h-8 min-w-8 flex items-center justify-center border border-emerald-900/30">{filteredRoots.length}</span>
             <button onClick={() => openAddModal('root')} className="box-border h-8 w-8 flex items-center justify-center rounded bg-emerald-950/60 hover:bg-emerald-900 text-emerald-400 border border-emerald-800/40 transition" title="Add Root">
               <Plus className="w-4 h-4" />
             </button>
           </div>
+          <div className="w-8 flex-shrink-0" aria-hidden />
+          <ExpandableColumnSearch
+            open={rootSearchOpen}
+            onOpen={() => setOpenSearch('root')}
+            onClose={() => {
+              setRootFilter('');
+              setOpenSearch(null);
+            }}
+            value={rootFilter}
+            onChange={setRootFilter}
+            placeholder="Filter…"
+          />
         </div>
         
         <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full pr-2">
@@ -1001,28 +999,28 @@ export default function InventoryPage() {
       </div>
 
       {/* Column 2: Subs */}
-      <div className={`col-span-1 xl2:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'subs' ? 'flex' : 'hidden xl2:flex'}`}>
+      <div className={`bg-zinc-900 border border-zinc-800 rounded-xl p-2 xl2:p-2.5 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full min-w-0 xl2:max-w-[18rem] xl2:basis-0 justify-start items-stretch ${activeTab === 'subs' ? 'flex' : 'hidden xl2:flex'}`}>
         <div className="relative h-8 mb-2.5 flex items-center gap-1.5 px-0.5 flex-shrink-0 w-full min-w-0">
           <h3 className="hidden xl2:block text-[11px] font-bold uppercase tracking-wider text-blue-400 flex-shrink-0">Subs</h3>
-          <div className="relative flex-1 min-w-0 h-8">
-            <ExpandableColumnSearch
-              open={subSearchOpen}
-              onOpen={() => setOpenSearch('sub')}
-              onClose={() => {
-                setSubFilter('');
-                setOpenSearch(null);
-              }}
-              value={subFilter}
-              onChange={setSubFilter}
-              placeholder="Filter…"
-            />
-          </div>
+          <div className="flex-1 min-w-0" />
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <span className="box-border bg-blue-950 text-blue-400 px-1.5 rounded text-[10px] font-mono h-8 min-w-8 flex items-center justify-center border border-blue-900/30">{filteredSubs.length}</span>
             <button disabled={!selectedRoot} onClick={() => openAddModal('sub')} className="box-border h-8 w-8 flex items-center justify-center rounded bg-blue-950/60 hover:bg-blue-900 text-blue-400 border border-blue-800/40 disabled:opacity-20 disabled:hover:bg-blue-950/60 transition" title="Add Sub Category">
               <Plus className="w-4 h-4" />
             </button>
           </div>
+          <div className="w-8 flex-shrink-0" aria-hidden />
+          <ExpandableColumnSearch
+            open={subSearchOpen}
+            onOpen={() => setOpenSearch('sub')}
+            onClose={() => {
+              setSubFilter('');
+              setOpenSearch(null);
+            }}
+            value={subFilter}
+            onChange={setSubFilter}
+            placeholder="Filter…"
+          />
         </div>
         
         <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full pr-2">
@@ -1053,28 +1051,28 @@ export default function InventoryPage() {
       </div>
 
       {/* Column 3: Brands */}
-      <div className={`col-span-1 xl2:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'brands' ? 'flex' : 'hidden xl2:flex'}`}>
+      <div className={`bg-zinc-900 border border-zinc-800 rounded-xl p-2 xl2:p-2.5 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full min-w-0 xl2:max-w-[18rem] xl2:basis-0 justify-start items-stretch ${activeTab === 'brands' ? 'flex' : 'hidden xl2:flex'}`}>
         <div className="relative h-8 mb-2.5 flex items-center gap-1.5 px-0.5 flex-shrink-0 w-full min-w-0">
           <h3 className="hidden xl2:block text-[11px] font-bold uppercase tracking-wider text-purple-400 flex-shrink-0">Brands</h3>
-          <div className="relative flex-1 min-w-0 h-8">
-            <ExpandableColumnSearch
-              open={brandSearchOpen}
-              onOpen={() => setOpenSearch('brand')}
-              onClose={() => {
-                setBrandFilter('');
-                setOpenSearch(null);
-              }}
-              value={brandFilter}
-              onChange={setBrandFilter}
-              placeholder="Filter…"
-            />
-          </div>
+          <div className="flex-1 min-w-0" />
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <span className="box-border bg-purple-950 text-purple-400 px-1.5 rounded text-[10px] font-mono h-8 min-w-8 flex items-center justify-center border border-purple-900/30">{filteredBrands.length}</span>
             <button disabled={!selectedSub} onClick={() => openAddModal('brand')} className="box-border h-8 w-8 flex items-center justify-center rounded bg-purple-950/60 hover:bg-purple-900 text-purple-400 border border-purple-800/40 disabled:opacity-20 disabled:hover:bg-purple-950/60 transition" title="Add Brand Context">
               <Plus className="w-4 h-4" />
             </button>
           </div>
+          <div className="w-8 flex-shrink-0" aria-hidden />
+          <ExpandableColumnSearch
+            open={brandSearchOpen}
+            onOpen={() => setOpenSearch('brand')}
+            onClose={() => {
+              setBrandFilter('');
+              setOpenSearch(null);
+            }}
+            value={brandFilter}
+            onChange={setBrandFilter}
+            placeholder="Filter…"
+          />
         </div>
         
         <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full pr-2">
@@ -1105,42 +1103,14 @@ export default function InventoryPage() {
       </div>
 
       {/* Column 4: Products Grid View */}
-      <div className={`col-span-1 xl2:col-span-4 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'products' ? 'flex' : 'hidden xl2:flex'}`}>
+      <div className={`bg-zinc-900 border border-zinc-800 rounded-xl p-2 xl2:p-2.5 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full min-w-0 xl2:min-w-[16rem] xl2:basis-0 justify-start items-stretch ${activeTab === 'products' ? 'flex' : 'hidden xl2:flex'}`}>
         
         {/* Header Controls Line */}
         <div className="relative h-8 mb-2.5 flex items-center gap-1.5 px-0.5 flex-shrink-0 select-none w-full min-w-0">
           <h3 className="hidden xl2:block text-[11px] font-bold uppercase tracking-wider text-orange-400 whitespace-nowrap flex-shrink-0">
             Products
           </h3>
-
-          <div className="relative flex-1 min-w-0 h-8">
-            <ExpandableColumnSearch
-              open={productSearchOpen}
-              onOpen={() => setOpenSearch('product')}
-              onClose={closeProductSearch}
-              value={searchQuery}
-              onChange={setSearchQuery}
-              placeholder={productSearchScope === 'all' ? 'All products…' : 'In brand…'}
-              activeHint={productSearchScope === 'all'}
-              desktopWidthClass="xl2:w-[14rem]"
-              scopeToggle={{
-                active: productSearchScope === 'all',
-                disabled: productSearchScope === 'all' && !selectedBrand,
-                onToggle: () => {
-                  if (productSearchScope === 'all') {
-                    if (selectedBrand) setProductSearchScope('brand');
-                  } else {
-                    setProductSearchScope('all');
-                  }
-                },
-                title:
-                  productSearchScope === 'all'
-                    ? 'All products search is on — click for this brand only'
-                    : 'Search this brand only — click for all products',
-              }}
-            />
-          </div>
-
+          <div className="flex-1 min-w-0" />
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <div className="relative flex-shrink-0" ref={dropdownRef}>
               <button
@@ -1176,6 +1146,31 @@ export default function InventoryPage() {
               <Plus className="w-4 h-4" />
             </button>
           </div>
+          <div className="w-8 flex-shrink-0" aria-hidden />
+          <ExpandableColumnSearch
+            open={productSearchOpen}
+            onOpen={() => setOpenSearch('product')}
+            onClose={closeProductSearch}
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={productSearchScope === 'all' ? 'All products…' : 'In brand…'}
+            activeHint={productSearchScope === 'all'}
+            scopeToggle={{
+              active: productSearchScope === 'all',
+              disabled: productSearchScope === 'all' && !selectedBrand,
+              onToggle: () => {
+                if (productSearchScope === 'all') {
+                  if (selectedBrand) setProductSearchScope('brand');
+                } else {
+                  setProductSearchScope('all');
+                }
+              },
+              title:
+                productSearchScope === 'all'
+                  ? 'All products search is on — click for this brand only'
+                  : 'Search this brand only — click for all products',
+            }}
+          />
         </div>
 
         {isSearchingGlobally && (
@@ -1191,7 +1186,7 @@ export default function InventoryPage() {
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800 rounded-xl gap-2 w-full"><Inbox className="w-4 h-4" /><span className="text-xs">No Products found</span></div>
           ) : (
             /* Standardized Compact Responsive E-commerce Grid Matrix */
-            <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(145px,1fr))] gap-3 pb-2 w-full min-w-0">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3 pb-2 w-full min-w-0">
               {displayedProducts.map(item => (
                 <div 
                   key={item.id} 
@@ -1202,7 +1197,7 @@ export default function InventoryPage() {
                       openProductViewDialog(item, e);
                     }
                   }}
-                  className={`bg-zinc-950 border rounded-xl flex flex-col overflow-hidden relative transition-all duration-200 group/card cursor-pointer shadow-sm hover:shadow-md w-full min-w-0 max-w-[165px] mx-auto ${isSearchingGlobally ? 'hover:border-blue-500' : ''} ${item.is_featured ? 'border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.04)]' : 'border-zinc-800/90 hover:border-zinc-700/80'}`}
+                  className={`bg-zinc-950 border rounded-xl flex flex-col overflow-hidden relative transition-all duration-200 group/card cursor-pointer shadow-sm hover:shadow-md w-full min-w-0 ${isSearchingGlobally ? 'hover:border-blue-500' : ''} ${item.is_featured ? 'border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.04)]' : 'border-zinc-800/90 hover:border-zinc-700/80'}`}
                 >
                   
                   {/* Image Square Asset Content Frame */}
