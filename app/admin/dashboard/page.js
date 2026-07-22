@@ -1,7 +1,7 @@
 // app/admin/dashboard/page.js
 'use client';
 import { useEffect, useState } from 'react';
-import { supabase } from '@/config/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { 
   Package, 
   CheckCircle2, 

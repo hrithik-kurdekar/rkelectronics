@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { supabase } from '@/config/supabase'; 
+import { supabase } from '@/lib/supabase/client'; 
 import { Star, Edit3, Trash2, X, ImagePlus, Inbox, GripVertical, AlertCircle, Search, Filter, Plus } from 'lucide-react';
 
 const BUCKET_NAME = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || 'product-media';
