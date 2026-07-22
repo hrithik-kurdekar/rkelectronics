@@ -658,7 +658,7 @@ export default function InventoryPage() {
           </div>
         </div>
         
-        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full [scrollbar-gutter:stable]">
+        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full pr-2.5 [scrollbar-gutter:stable]">
           {roots.length === 0 ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-zinc-800 border-dashed rounded-xl gap-2 w-full"><Inbox className="w-4 h-4" /> <span className="text-xs">No Roots</span></div>
           ) : (
@@ -690,7 +690,7 @@ export default function InventoryPage() {
           </div>
         </div>
         
-        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full [scrollbar-gutter:stable]">
+        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full pr-2.5 [scrollbar-gutter:stable]">
           {!selectedRoot ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800/50 rounded-xl p-4 text-center gap-1.5 w-full"><AlertCircle className="w-4 h-4 text-zinc-500" /><span className="text-[11px]">Select a Root Category first</span></div>
           ) : subs.length === 0 ? (
@@ -724,7 +724,7 @@ export default function InventoryPage() {
           </div>
         </div>
         
-        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full [scrollbar-gutter:stable]">
+        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full pr-2.5 [scrollbar-gutter:stable]">
           {!selectedSub ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800/50 rounded-xl p-4 text-center gap-1.5 w-full"><AlertCircle className="w-4 h-4 text-zinc-500" /><span className="text-[11px]">Select a Sub Category first</span></div>
           ) : brands.length === 0 ? (
@@ -837,7 +837,7 @@ export default function InventoryPage() {
           </div>
         )}
         
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full [scrollbar-gutter:stable]">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full pr-2.5 [scrollbar-gutter:stable]">
           {!selectedBrand && !isSearchingGlobally ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800/50 rounded-xl p-4 text-center gap-1.5 w-full"><AlertCircle className="w-4 h-4 text-zinc-500" /><span className="text-[11px]">Select a Brand or search above</span></div>
           ) : displayedProducts.length === 0 ? (
