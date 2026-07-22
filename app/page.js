@@ -5,6 +5,7 @@ import { Cpu, ArrowRight, Layers, AlertCircle } from 'lucide-react';
 import ProductImage from '@/app/components/ProductImage';
 import StorefrontFooter from '@/app/components/StorefrontFooter';
 import { categorySlugFromName } from '@/lib/category-slug';
+import { PRODUCT_LIST_SELECT } from '@/lib/media-limits';
 
 export const revalidate = 3600;
 export const dynamic = 'force-static';
@@ -18,7 +19,7 @@ async function fetchStorefrontPayload() {
 
   const { data: featuredRows, error: featuredError } = await supabase
     .from('products')
-    .select('*')
+    .select(PRODUCT_LIST_SELECT)
     .eq('is_featured', true)
     .order('created_at', { ascending: false })
     .limit(12);
@@ -29,7 +30,7 @@ async function fetchStorefrontPayload() {
   if (!showingFeatured) {
     const { data: latest, error: latestError } = await supabase
       .from('products')
-      .select('*')
+      .select(PRODUCT_LIST_SELECT)
       .order('created_at', { ascending: false })
       .limit(12);
     featured = latest || [];
