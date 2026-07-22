@@ -660,10 +660,10 @@ export default function InventoryPage() {
   });
 
   const renderColumnSearch = (value, onChange, placeholder) => (
-    <div className="relative flex-1 min-w-0 mx-1.5 max-w-full">
+    <div className="relative flex-1 min-w-[4.5rem] mx-1 max-w-full">
       <Search className="w-3 h-3 text-zinc-500 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
       <input
-        type="search"
+        type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
@@ -718,7 +718,7 @@ export default function InventoryPage() {
           </div>
         </div>
         
-        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full pr-2.5 [scrollbar-gutter:stable]">
+        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full">
           {roots.length === 0 ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-zinc-800 border-dashed rounded-xl gap-2 w-full"><Inbox className="w-4 h-4" /> <span className="text-xs">No Roots</span></div>
           ) : filteredRoots.length === 0 ? (
@@ -753,7 +753,7 @@ export default function InventoryPage() {
           </div>
         </div>
         
-        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full pr-2.5 [scrollbar-gutter:stable]">
+        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full">
           {!selectedRoot ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800/50 rounded-xl p-4 text-center gap-1.5 w-full"><AlertCircle className="w-4 h-4 text-zinc-500" /><span className="text-[11px]">Select a Root Category first</span></div>
           ) : subs.length === 0 ? (
@@ -790,7 +790,7 @@ export default function InventoryPage() {
           </div>
         </div>
         
-        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full pr-2.5 [scrollbar-gutter:stable]">
+        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full">
           {!selectedSub ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800/50 rounded-xl p-4 text-center gap-1.5 w-full"><AlertCircle className="w-4 h-4 text-zinc-500" /><span className="text-[11px]">Select a Sub Category first</span></div>
           ) : brands.length === 0 ? (
@@ -819,40 +819,39 @@ export default function InventoryPage() {
         
         {/* Header Controls Line */}
         <div className="h-8 mb-2.5 flex items-center gap-1 px-0.5 flex-shrink-0 select-none w-full min-w-0">
-          <h3 className="text-[11px] font-bold uppercase tracking-wider text-orange-400 whitespace-nowrap flex-shrink-0">Products</h3>
+          <h3 className="text-[11px] font-bold uppercase tracking-wider text-orange-400 whitespace-nowrap flex-shrink-0">
+            <span className="md:hidden">Prod</span>
+            <span className="hidden md:inline">Products</span>
+          </h3>
 
-          <div className="flex items-center gap-0.5 flex-shrink-0 rounded-md border border-zinc-800 bg-zinc-950 p-0.5">
-            <button
-              type="button"
-              onClick={() => setProductSearchScope('brand')}
-              disabled={!selectedBrand}
-              className={`px-1.5 h-7 rounded text-[9px] font-bold uppercase tracking-wide transition disabled:opacity-30 ${
-                productSearchScope === 'brand'
-                  ? 'bg-zinc-800 text-orange-400'
-                  : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-              title="Search within selected brand"
-            >
-              Brand
-            </button>
-            <button
-              type="button"
-              onClick={() => setProductSearchScope('all')}
-              className={`px-1.5 h-7 rounded text-[9px] font-bold uppercase tracking-wide transition ${
-                productSearchScope === 'all'
-                  ? 'bg-zinc-800 text-orange-400'
-                  : 'text-zinc-500 hover:text-zinc-300'
-              }`}
-              title="Search all products"
-            >
-              All
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              if (productSearchScope === 'all') {
+                if (selectedBrand) setProductSearchScope('brand');
+              } else {
+                setProductSearchScope('all');
+              }
+            }}
+            disabled={productSearchScope === 'all' && !selectedBrand}
+            className={`h-8 min-w-[2.25rem] px-1.5 flex-shrink-0 rounded-md border text-[9px] font-bold uppercase tracking-wide transition disabled:opacity-30 ${
+              productSearchScope === 'all'
+                ? 'border-orange-500/40 bg-orange-950/40 text-orange-400'
+                : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200'
+            }`}
+            title={
+              productSearchScope === 'all'
+                ? 'Searching all products — click for brand only'
+                : 'Searching this brand — click for all products'
+            }
+          >
+            {productSearchScope === 'all' ? 'All' : 'Br'}
+          </button>
 
           {renderColumnSearch(
             searchQuery,
             setSearchQuery,
-            productSearchScope === 'all' ? 'All products…' : 'In brand…'
+            productSearchScope === 'all' ? 'All…' : 'Brand…'
           )}
 
           <div className="flex items-center gap-1.5 flex-shrink-0">
@@ -898,7 +897,7 @@ export default function InventoryPage() {
           </p>
         )}
         
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full pr-2.5 [scrollbar-gutter:stable]">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full">
           {!selectedBrand && !isSearchingGlobally ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800/50 rounded-xl p-4 text-center gap-1.5 w-full"><AlertCircle className="w-4 h-4 text-zinc-500" /><span className="text-[11px]">Select a Brand or search All above</span></div>
           ) : displayedProducts.length === 0 ? (
