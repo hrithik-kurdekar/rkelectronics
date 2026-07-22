@@ -1,7 +1,7 @@
 import { supabase } from '@/config/supabase';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
-import { ArrowLeft, ArrowRight, Cpu } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Cpu, AlertCircle } from 'lucide-react';
 import ProductImage from '@/app/components/ProductImage';
 import { categoryNameFromSlug } from '@/lib/category-slug';
 
@@ -11,11 +11,22 @@ export default async function CategoryPage({ params }) {
   const { slug } = await params;
   const normalizedSlug = categoryNameFromSlug(slug);
 
-  const { data: roots } = await supabase
+  const { data: roots, error: rootsError } = await supabase
     .from('categories')
     .select('*')
     .eq('type', 'root')
     .order('sort_order');
+
+  if (rootsError) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center px-6">
+        <div className="flex items-start gap-3 p-4 rounded-xl bg-red-950/20 border border-red-900/40 text-red-400 text-sm max-w-md">
+          <AlertCircle className="w-5 h-5 flex-shrink-0" />
+          <p>Could not load this category. Please try again later.</p>
+        </div>
+      </div>
+    );
+  }
 
   const category = (roots || []).find(
     (root) => root.name.toLowerCase() === normalizedSlug
@@ -23,7 +34,7 @@ export default async function CategoryPage({ params }) {
 
   if (!category) notFound();
 
-  const { data: products } = await supabase
+  const { data: products, error: productsError } = await supabase
     .from('products')
     .select('*')
     .eq('root_category_id', category.id)
@@ -47,10 +58,17 @@ export default async function CategoryPage({ params }) {
 
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-white">{category.name}</h1>
-          <p className="text-sm text-zinc-500 mt-2">{(products || []).length} products in this category</p>
+          <p className="text-sm text-zinc-500 mt-2">
+            {productsError ? 'Could not load products.' : `${(products || []).length} products in this category`}
+          </p>
         </div>
 
-        {(products || []).length === 0 ? (
+        {productsError ? (
+          <div className="flex items-start gap-3 p-4 rounded-xl bg-red-950/20 border border-red-900/40 text-red-400 text-sm">
+            <AlertCircle className="w-5 h-5 flex-shrink-0" />
+            <p>Product list failed to load. Please refresh the page.</p>
+          </div>
+        ) : (products || []).length === 0 ? (
           <p className="text-zinc-500 text-sm py-12 text-center border border-zinc-800 rounded-2xl bg-zinc-900/30">
             No products in this category yet.
           </p>

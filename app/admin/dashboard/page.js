@@ -2,6 +2,7 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
+import { countProductsByCondition } from '@/lib/product-conditions';
 import { 
   Package, 
   CheckCircle2, 
@@ -20,7 +21,7 @@ import {
 } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const [stats, setStats] = useState({ total: 0, new: 0, used: 0, parts: 0 });
+  const [stats, setStats] = useState({ total: 0, new: 0, refurbished: 0, used: 0, other: 0 });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -32,14 +33,7 @@ export default function AdminDashboard() {
     setRefreshing(true);
     const { data, error } = await supabase.from('products').select('condition');
     if (!error && data) {
-      const counts = data.reduce((acc, curr) => {
-        acc.total++;
-        if (curr.condition === 'Brand New') acc.new++;
-        else if (curr.condition === 'For Parts / Not Working') acc.parts++;
-        else acc.used++;
-        return acc;
-      }, { total: 0, new: 0, used: 0, parts: 0 });
-      setStats(counts);
+      setStats(countProductsByCondition(data));
     }
     setLoading(false);
     setRefreshing(false);
@@ -47,9 +41,9 @@ export default function AdminDashboard() {
 
   const cardConfig = [
     { title: 'Total Catalog SKUs', value: stats.total, icon: Package, color: 'text-blue-500 bg-blue-500/5 border-blue-500/10' },
-    { title: 'Brand New Stock', value: stats.new, icon: CheckCircle2, color: 'text-emerald-500 bg-emerald-500/5 border-emerald-500/10' },
-    { title: 'Pre-Owned Inventory', value: stats.used, icon: CheckCircle2, color: 'text-teal-500 bg-teal-500/5 border-teal-500/10' },
-    { title: 'Salvage / Parts Assets', value: stats.parts, icon: AlertTriangle, color: 'text-amber-500 bg-amber-500/5 border-amber-500/10' },
+    { title: 'New Stock', value: stats.new, icon: CheckCircle2, color: 'text-emerald-500 bg-emerald-500/5 border-emerald-500/10' },
+    { title: 'Refurbished', value: stats.refurbished, icon: CheckCircle2, color: 'text-teal-500 bg-teal-500/5 border-teal-500/10' },
+    { title: 'Used / Pre-Owned', value: stats.used + stats.other, icon: AlertTriangle, color: 'text-amber-500 bg-amber-500/5 border-amber-500/10' },
   ];
 
   return (
