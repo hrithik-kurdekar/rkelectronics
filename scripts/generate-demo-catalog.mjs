@@ -2,7 +2,7 @@
  * Generates fixtures/demo-catalog.json for NEXT_PUBLIC_DEMO_MODE.
  * Run: node scripts/generate-demo-catalog.mjs
  */
-import { writeFileSync, mkdirSync, existsSync } from 'fs';
+import { writeFileSync, mkdirSync, existsSync, copyFileSync } from 'fs';
 import { dirname, join } from 'path';
 import { fileURLToPath } from 'url';
 import { randomUUID } from 'crypto';
@@ -34,17 +34,18 @@ function sku(n) {
   return `SKU-DEMO${String(n).padStart(4, '0')}`;
 }
 
-// Tiny gray PNG (shared by all demo products — no Supabase Storage)
-const PLACEHOLDER_PNG = Buffer.from(
-  'iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAFUlEQVR42mNk+M9Qz0AEYBxVSF+FABJADveWkH6oAAAAAElFTkSuQmCC',
-  'base64'
-);
-
 mkdirSync(fixturesDir, { recursive: true });
 mkdirSync(publicDemoDir, { recursive: true });
-writeFileSync(join(publicDemoDir, 'product.png'), PLACEHOLDER_PNG);
 
-const DEMO_IMAGE = '/demo/product.png';
+const demoImageSrc = join(root, 'demo_image.webp');
+const demoImageDest = join(publicDemoDir, 'demo_image.webp');
+if (existsSync(demoImageSrc)) {
+  copyFileSync(demoImageSrc, demoImageDest);
+} else if (!existsSync(demoImageDest)) {
+  throw new Error('Missing demo_image.webp (repo root or public/demo/demo_image.webp)');
+}
+
+const DEMO_IMAGE = '/demo/demo_image.webp';
 const now = new Date().toISOString();
 
 const categories = [];
@@ -211,4 +212,4 @@ const brandStats = categories.filter((c) => c.type === 'brand').length;
 console.log(`Wrote ${outPath}`);
 console.log(`  roots=${rootStats} subs=${subStats} brands=${brandStats} products=${products.length}`);
 console.log(`  heavy brand products: ${HEAVY_PRODUCT_COUNT} x 2`);
-console.log(`  placeholder: public/demo/product.png`);
+console.log(`  placeholder: public/demo/demo_image.webp`);

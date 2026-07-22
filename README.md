@@ -55,7 +55,7 @@ One application. Flip storage with an env flag:
 
 Storefront and admin **reads** go through `lib/data.js`. In demo mode, catalog edits (inventory, connections, uploads) are blocked — no Supabase Storage/DB writes.
 
-1. `npm run demo:generate` (refresh fixtures + `public/demo/product.png`)
+1. `npm run demo:generate` (refresh fixtures + `public/demo/demo_image.webp`)
 2. Set `NEXT_PUBLIC_DEMO_MODE=true` in `.env.local`
 3. Restart `npm run dev`
 

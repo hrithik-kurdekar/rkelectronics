@@ -35,6 +35,8 @@ function ExpandableColumnSearch({
   placeholder,
   activeHint = false,
   scopeToggle = null,
+  /** Fixed rem width when expanded on xl2+ (avoid w-full→max-w flash). */
+  desktopWidthClass = 'xl2:w-[11rem]',
 }) {
   const wrapRef = useRef(null);
   const inputRef = useRef(null);
@@ -104,7 +106,7 @@ function ExpandableColumnSearch({
       ref={wrapRef}
       onTransitionEnd={handlePanelTransitionEnd}
       className={`absolute top-0 right-0 h-8 overflow-hidden origin-right transition-[width] duration-200 ease-in-out ${
-        visualOpen ? 'w-full z-20' : 'w-8 z-10'
+        visualOpen ? `w-full ${desktopWidthClass} z-20` : 'w-8 z-10'
       }`}
     >
       <button
@@ -258,7 +260,7 @@ export default function InventoryPage() {
   useEffect(() => {
     if (productSearchScope === 'all' && searchQuery.trim().length > 0) {
       handleGlobalSearch(searchQuery);
-      if (typeof window !== 'undefined' && window.matchMedia('(max-width: 767px)').matches) {
+      if (typeof window !== 'undefined' && window.matchMedia('(max-width: 1599px)').matches) {
         setActiveTab('products');
       }
     } else {
@@ -819,10 +821,10 @@ export default function InventoryPage() {
   return (
     <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden">
       <ErrorBanner message={loadError} onDismiss={() => setLoadError(null)} className="mx-4 mt-2 shrink-0" />
-    <div className="flex-1 min-h-0 w-full p-4 flex flex-col md:grid md:grid-cols-10 md:grid-rows-1 gap-4 items-stretch overflow-hidden select-none relative">
+    <div className="flex-1 min-h-0 w-full p-4 flex flex-col xl2:grid xl2:grid-cols-10 xl2:grid-rows-1 gap-4 items-stretch overflow-hidden select-none relative">
       
       {/* Sticky Mobile Navigation Controls Wrapper Layer */}
-      <div className="z-30 col-span-1 md:hidden flex shrink-0 border border-zinc-800 bg-zinc-950 p-1 rounded-xl gap-1 h-11 items-center w-full shadow-lg">
+      <div className="z-30 col-span-1 xl2:hidden flex shrink-0 border border-zinc-800 bg-zinc-950 p-1 rounded-xl gap-1 h-11 items-center w-full shadow-lg">
         {['roots', 'subs', 'brands', 'products'].map((tab) => (
           <button
             key={tab}
@@ -840,9 +842,9 @@ export default function InventoryPage() {
       </div>
 
       {/* Column 1: Roots */}
-      <div className={`col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'roots' ? 'flex' : 'hidden md:flex'}`}>
+      <div className={`col-span-1 xl2:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'roots' ? 'flex' : 'hidden xl2:flex'}`}>
         <div className="relative h-8 mb-2.5 flex items-center gap-1.5 px-0.5 flex-shrink-0 w-full min-w-0">
-          <h3 className="hidden md:block text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex-shrink-0">Roots</h3>
+          <h3 className="hidden xl2:block text-[11px] font-bold uppercase tracking-wider text-emerald-400 flex-shrink-0">Roots</h3>
           <div className="relative flex-1 min-w-0 h-8">
             <ExpandableColumnSearch
               open={rootSearchOpen}
@@ -887,9 +889,9 @@ export default function InventoryPage() {
       </div>
 
       {/* Column 2: Subs */}
-      <div className={`col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'subs' ? 'flex' : 'hidden md:flex'}`}>
+      <div className={`col-span-1 xl2:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'subs' ? 'flex' : 'hidden xl2:flex'}`}>
         <div className="relative h-8 mb-2.5 flex items-center gap-1.5 px-0.5 flex-shrink-0 w-full min-w-0">
-          <h3 className="hidden md:block text-[11px] font-bold uppercase tracking-wider text-blue-400 flex-shrink-0">Subs</h3>
+          <h3 className="hidden xl2:block text-[11px] font-bold uppercase tracking-wider text-blue-400 flex-shrink-0">Subs</h3>
           <div className="relative flex-1 min-w-0 h-8">
             <ExpandableColumnSearch
               open={subSearchOpen}
@@ -936,9 +938,9 @@ export default function InventoryPage() {
       </div>
 
       {/* Column 3: Brands */}
-      <div className={`col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'brands' ? 'flex' : 'hidden md:flex'}`}>
+      <div className={`col-span-1 xl2:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'brands' ? 'flex' : 'hidden xl2:flex'}`}>
         <div className="relative h-8 mb-2.5 flex items-center gap-1.5 px-0.5 flex-shrink-0 w-full min-w-0">
-          <h3 className="hidden md:block text-[11px] font-bold uppercase tracking-wider text-purple-400 flex-shrink-0">Brands</h3>
+          <h3 className="hidden xl2:block text-[11px] font-bold uppercase tracking-wider text-purple-400 flex-shrink-0">Brands</h3>
           <div className="relative flex-1 min-w-0 h-8">
             <ExpandableColumnSearch
               open={brandSearchOpen}
@@ -985,11 +987,11 @@ export default function InventoryPage() {
       </div>
 
       {/* Column 4: Products Grid View */}
-      <div className={`col-span-1 md:col-span-4 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'products' ? 'flex' : 'hidden md:flex'}`}>
+      <div className={`col-span-1 xl2:col-span-4 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'products' ? 'flex' : 'hidden xl2:flex'}`}>
         
         {/* Header Controls Line */}
         <div className="relative h-8 mb-2.5 flex items-center gap-1.5 px-0.5 flex-shrink-0 select-none w-full min-w-0">
-          <h3 className="hidden md:block text-[11px] font-bold uppercase tracking-wider text-orange-400 whitespace-nowrap flex-shrink-0">
+          <h3 className="hidden xl2:block text-[11px] font-bold uppercase tracking-wider text-orange-400 whitespace-nowrap flex-shrink-0">
             Products
           </h3>
 
@@ -1002,6 +1004,7 @@ export default function InventoryPage() {
               onChange={setSearchQuery}
               placeholder={productSearchScope === 'all' ? 'All products…' : 'In brand…'}
               activeHint={productSearchScope === 'all'}
+              desktopWidthClass="xl2:w-[14rem]"
               scopeToggle={{
                 active: productSearchScope === 'all',
                 disabled: productSearchScope === 'all' && !selectedBrand,
