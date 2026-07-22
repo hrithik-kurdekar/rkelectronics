@@ -624,12 +624,12 @@ export default function InventoryPage() {
   });
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
+    <div className="flex flex-col flex-1 min-h-0 h-full overflow-hidden">
       <ErrorBanner message={loadError} onDismiss={() => setLoadError(null)} className="mx-4 mt-2 shrink-0" />
-    <div className="flex-1 w-full p-4 grid grid-cols-1 md:grid-cols-10 gap-4 h-[calc(100vh-65px)] items-stretch overflow-hidden select-none relative">
+    <div className="flex-1 min-h-0 w-full p-4 flex flex-col md:grid md:grid-cols-10 md:grid-rows-1 gap-4 items-stretch overflow-hidden select-none relative">
       
       {/* Sticky Mobile Navigation Controls Wrapper Layer */}
-      <div className="sticky top-0 z-30 col-span-1 md:hidden flex border border-zinc-800 bg-zinc-950 p-1 rounded-xl gap-1 h-11 items-center w-full shadow-lg">
+      <div className="z-30 col-span-1 md:hidden flex shrink-0 border border-zinc-800 bg-zinc-950 p-1 rounded-xl gap-1 h-11 items-center w-full shadow-lg">
         {['roots', 'subs', 'brands', 'products'].map((tab) => (
           <button
             key={tab}
@@ -647,7 +647,7 @@ export default function InventoryPage() {
       </div>
 
       {/* Column 1: Roots */}
-      <div className={`col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col h-full min-h-0 w-full justify-start items-stretch ${activeTab === 'roots' ? 'flex' : 'hidden md:flex'}`}>
+      <div className={`col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'roots' ? 'flex' : 'hidden md:flex'}`}>
         <div className="h-8 mb-2.5 flex items-center justify-between px-1 flex-shrink-0 w-full">
           <h3 className="text-[11px] font-bold uppercase tracking-wider text-emerald-400">Roots</h3>
           <div className="flex items-center gap-1.5 ml-auto">
@@ -658,12 +658,12 @@ export default function InventoryPage() {
           </div>
         </div>
         
-        <div className="space-y-2 flex-grow overflow-y-auto pr-1 min-h-0 w-full flex flex-col justify-start">
+        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full [scrollbar-gutter:stable]">
           {roots.length === 0 ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-zinc-800 border-dashed rounded-xl gap-2 w-full"><Inbox className="w-4 h-4" /> <span className="text-xs">No Roots</span></div>
           ) : (
             roots.map(item => (
-              <div key={item.id} draggable onDragStart={() => handleDragStart(item)} onDragOver={handleDragOver} onDrop={() => handleDropOnItem(item, roots, 'root')} onClick={() => handleRootSelect(item.id)} className={`p-2 rounded-lg flex items-center justify-between cursor-pointer border transition group w-full ${selectedRoot === item.id ? 'bg-emerald-950/20 border-emerald-500/60 text-emerald-300' : 'bg-zinc-950 border-zinc-800/50 hover:bg-zinc-900'}`}>
+              <div key={item.id} draggable onDragStart={() => handleDragStart(item)} onDragOver={handleDragOver} onDrop={() => handleDropOnItem(item, roots, 'root')} onClick={() => handleRootSelect(item.id)} className={`p-2 rounded-lg flex items-center justify-between cursor-pointer border transition group w-full min-w-0 overflow-hidden ${selectedRoot === item.id ? 'bg-emerald-950/20 border-emerald-500/60 text-emerald-300' : 'bg-zinc-950 border-zinc-800/50 hover:bg-zinc-900'}`}>
                 <div className="flex items-center gap-2 min-w-0">
                   <GripVertical className="w-3.5 h-3.5 text-zinc-600 cursor-grab group-hover:text-zinc-400 flex-shrink-0" />
                   <span className="text-xs font-medium truncate">{item.name}</span>
@@ -679,7 +679,7 @@ export default function InventoryPage() {
       </div>
 
       {/* Column 2: Subs */}
-      <div className={`col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col h-full min-h-0 w-full justify-start items-stretch ${activeTab === 'subs' ? 'flex' : 'hidden md:flex'}`}>
+      <div className={`col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'subs' ? 'flex' : 'hidden md:flex'}`}>
         <div className="h-8 mb-2.5 flex items-center justify-between px-1 flex-shrink-0 w-full">
           <h3 className="text-[11px] font-bold uppercase tracking-wider text-blue-400">Subs</h3>
           <div className="flex items-center gap-1.5 ml-auto">
@@ -690,14 +690,14 @@ export default function InventoryPage() {
           </div>
         </div>
         
-        <div className="space-y-2 flex-grow overflow-y-auto pr-1 min-h-0 w-full flex flex-col justify-start">
+        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full [scrollbar-gutter:stable]">
           {!selectedRoot ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800/50 rounded-xl p-4 text-center gap-1.5 w-full"><AlertCircle className="w-4 h-4 text-zinc-500" /><span className="text-[11px]">Select a Root Category first</span></div>
           ) : subs.length === 0 ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800 rounded-xl gap-2 w-full"><Inbox className="w-4 h-4" /><span className="text-xs">No Subs found</span></div>
           ) : (
             subs.map(item => (
-              <div key={item.id} draggable onDragStart={() => handleDragStart(item)} onDragOver={handleDragOver} onDrop={() => handleDropOnItem(item, subs, 'sub')} onClick={() => handleSubSelect(item.id)} className={`p-2 rounded-lg flex items-center justify-between cursor-pointer border transition group w-full ${selectedSub === item.id ? 'bg-blue-950/20 border-blue-500/60 text-blue-300' : 'bg-zinc-950 border-zinc-800/50 hover:bg-zinc-900'}`}>
+              <div key={item.id} draggable onDragStart={() => handleDragStart(item)} onDragOver={handleDragOver} onDrop={() => handleDropOnItem(item, subs, 'sub')} onClick={() => handleSubSelect(item.id)} className={`p-2 rounded-lg flex items-center justify-between cursor-pointer border transition group w-full min-w-0 overflow-hidden ${selectedSub === item.id ? 'bg-blue-950/20 border-blue-500/60 text-blue-300' : 'bg-zinc-950 border-zinc-800/50 hover:bg-zinc-900'}`}>
                 <div className="flex items-center gap-2 min-w-0">
                   <GripVertical className="w-3.5 h-3.5 text-zinc-600 cursor-grab group-hover:text-zinc-400 flex-shrink-0" />
                   <span className="text-xs font-medium truncate">{item.name}</span>
@@ -713,7 +713,7 @@ export default function InventoryPage() {
       </div>
 
       {/* Column 3: Brands */}
-      <div className={`col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col h-full min-h-0 w-full justify-start items-stretch ${activeTab === 'brands' ? 'flex' : 'hidden md:flex'}`}>
+      <div className={`col-span-1 md:col-span-2 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'brands' ? 'flex' : 'hidden md:flex'}`}>
         <div className="h-8 mb-2.5 flex items-center justify-between px-1 flex-shrink-0 w-full">
           <h3 className="text-[11px] font-bold uppercase tracking-wider text-purple-400">Brands</h3>
           <div className="flex items-center gap-1.5 ml-auto">
@@ -724,14 +724,14 @@ export default function InventoryPage() {
           </div>
         </div>
         
-        <div className="space-y-2 flex-grow overflow-y-auto pr-1 min-h-0 w-full flex flex-col justify-start">
+        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full [scrollbar-gutter:stable]">
           {!selectedSub ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800/50 rounded-xl p-4 text-center gap-1.5 w-full"><AlertCircle className="w-4 h-4 text-zinc-500" /><span className="text-[11px]">Select a Sub Category first</span></div>
           ) : brands.length === 0 ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800 rounded-xl gap-2 w-full"><Inbox className="w-4 h-4" /><span className="text-xs">No Brands found</span></div>
           ) : (
             brands.map(item => (
-              <div key={item.id} draggable onDragStart={() => handleDragStart(item)} onDragOver={handleDragOver} onDrop={() => handleDropOnItem(item, brands, 'brand')} onClick={() => handleBrandSelect(item.id)} className={`p-2 rounded-lg flex items-center justify-between cursor-pointer border transition group w-full ${selectedBrand === item.id ? 'bg-purple-950/20 border-purple-500/60 text-purple-300' : 'bg-zinc-950 border-zinc-800/50 hover:bg-zinc-900'}`}>
+              <div key={item.id} draggable onDragStart={() => handleDragStart(item)} onDragOver={handleDragOver} onDrop={() => handleDropOnItem(item, brands, 'brand')} onClick={() => handleBrandSelect(item.id)} className={`p-2 rounded-lg flex items-center justify-between cursor-pointer border transition group w-full min-w-0 overflow-hidden ${selectedBrand === item.id ? 'bg-purple-950/20 border-purple-500/60 text-purple-300' : 'bg-zinc-950 border-zinc-800/50 hover:bg-zinc-900'}`}>
                 <div className="flex items-center gap-2 min-w-0">
                   <GripVertical className="w-3.5 h-3.5 text-zinc-600 cursor-grab group-hover:text-zinc-400 flex-shrink-0" />
                   <span className="text-xs font-medium truncate">{item.name}</span>
@@ -747,7 +747,7 @@ export default function InventoryPage() {
       </div>
 
       {/* Column 4: Products Grid View */}
-      <div className={`col-span-1 md:col-span-4 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col h-full min-h-0 w-full justify-start items-stretch ${activeTab === 'products' ? 'flex' : 'hidden md:flex'}`}>
+      <div className={`col-span-1 md:col-span-4 bg-zinc-900 border border-zinc-800 rounded-xl p-3 flex flex-col flex-1 min-h-0 max-h-full overflow-hidden w-full justify-start items-stretch ${activeTab === 'products' ? 'flex' : 'hidden md:flex'}`}>
         
         {/* Header Controls Line */}
         <div className="h-8 mb-2.5 flex items-center justify-between px-1 flex-shrink-0 select-none gap-2 w-full">
@@ -837,14 +837,14 @@ export default function InventoryPage() {
           </div>
         )}
         
-        <div className="flex-grow overflow-y-auto pr-1 min-h-0 w-full flex flex-col justify-start">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full [scrollbar-gutter:stable]">
           {!selectedBrand && !isSearchingGlobally ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800/50 rounded-xl p-4 text-center gap-1.5 w-full"><AlertCircle className="w-4 h-4 text-zinc-500" /><span className="text-[11px]">Select a Brand or search above</span></div>
           ) : displayedProducts.length === 0 ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800 rounded-xl gap-2 w-full"><Inbox className="w-4 h-4" /><span className="text-xs">No Products found</span></div>
           ) : (
             /* Standardized Compact Responsive E-commerce Grid Matrix */
-            <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(145px,1fr))] gap-3 pb-2 w-full">
+            <div className="grid grid-cols-2 sm:grid-cols-[repeat(auto-fill,minmax(145px,1fr))] gap-3 pb-2 w-full min-w-0">
               {displayedProducts.map(item => (
                 <div 
                   key={item.id} 
@@ -855,7 +855,7 @@ export default function InventoryPage() {
                       openProductViewDialog(item, e);
                     }
                   }}
-                  className={`bg-zinc-950 border rounded-xl flex flex-col overflow-hidden relative transition-all duration-200 group/card cursor-pointer shadow-sm hover:shadow-md w-full max-w-[165px] mx-auto ${isSearchingGlobally ? 'hover:border-blue-500' : ''} ${item.is_featured ? 'border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.04)]' : 'border-zinc-800/90 hover:border-zinc-700/80'}`}
+                  className={`bg-zinc-950 border rounded-xl flex flex-col overflow-hidden relative transition-all duration-200 group/card cursor-pointer shadow-sm hover:shadow-md w-full min-w-0 max-w-[165px] mx-auto ${isSearchingGlobally ? 'hover:border-blue-500' : ''} ${item.is_featured ? 'border-amber-500/40 shadow-[0_0_10px_rgba(245,158,11,0.04)]' : 'border-zinc-800/90 hover:border-zinc-700/80'}`}
                 >
                   
                   {/* Image Square Asset Content Frame */}

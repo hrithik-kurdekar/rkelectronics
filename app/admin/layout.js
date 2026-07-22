@@ -29,10 +29,10 @@ export default function AdminLayoutWrapper({ children }) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-100 relative">
+    <div className="h-dvh max-h-dvh flex flex-col overflow-hidden bg-zinc-950 text-zinc-100 relative">
       
       {/* --- Top Navigation Header Bar (Shared Admin Layout) --- */}
-      <nav className="w-full bg-zinc-900 border-b border-zinc-800 px-4 md:px-6 py-3.5 flex items-center justify-between sticky top-0 z-40">
+      <nav className="w-full shrink-0 bg-zinc-900 border-b border-zinc-800 px-4 md:px-6 py-3.5 flex items-center justify-between z-40">
         
         {/* Left Column: Brand Logo */}
         <div className="flex items-center flex-1 md:flex-initial">
@@ -96,7 +96,7 @@ export default function AdminLayoutWrapper({ children }) {
       </nav>
 
       {demoMode && (
-        <div className="w-full bg-amber-950/40 border-b border-amber-800/50 px-4 py-2 text-center text-[11px] text-amber-200/90">
+        <div className="w-full shrink-0 bg-amber-950/40 border-b border-amber-800/50 px-4 py-2 text-center text-[11px] text-amber-200/90">
           Demo mode — catalog is local fixtures (read-only). Set{' '}
           <code className="font-mono text-amber-100">NEXT_PUBLIC_DEMO_MODE=false</code> to use Supabase.
         </div>
@@ -153,7 +153,7 @@ export default function AdminLayoutWrapper({ children }) {
       )}
 
       {/* --- Primary Workspace Panel (Takes remaining viewport space) --- */}
-      <main className="flex-1 w-full flex flex-col min-h-0">
+      <main className="flex-1 w-full flex flex-col min-h-0 overflow-hidden">
         {children}
       </main>
 
