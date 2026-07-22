@@ -7,6 +7,7 @@ import { revalidateStorefront } from '@/app/actions/revalidate-storefront';
 import { CONDITION_FILTER_OPTIONS } from '@/lib/product-conditions';
 import { searchIlikePattern } from '@/lib/search-query';
 import { Star, Edit3, Trash2, X, ImagePlus, Inbox, GripVertical, AlertCircle, Search, Filter, Plus } from 'lucide-react';
+import ErrorBanner from '@/app/components/ErrorBanner';
 
 const BUCKET_NAME = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || 'product-media';
 
@@ -41,6 +42,7 @@ export default function InventoryPage() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [editingItem, setEditingItem] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState(null);
 
   // --- Product Detailed View Dialog State ---
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
@@ -95,9 +97,10 @@ export default function InventoryPage() {
   const fetchInitialHierarchy = async () => {
     const { data: rootData, error } = await supabase.from('categories').select('*').eq('type', 'root').order('sort_order');
     if (error) {
-      console.error('Failed fetching root matrix:', error.message);
+      setLoadError('Could not load inventory categories. Please refresh the page.');
       return;
     }
+    setLoadError(null);
     setRoots(rootData || []);
     
     if (rootData && rootData.length > 0) {
@@ -590,6 +593,8 @@ export default function InventoryPage() {
   });
 
   return (
+    <div className="flex flex-col flex-1 min-h-0">
+      <ErrorBanner message={loadError} onDismiss={() => setLoadError(null)} className="mx-4 mt-2 shrink-0" />
     <div className="flex-1 w-full p-4 grid grid-cols-1 md:grid-cols-10 gap-4 h-[calc(100vh-65px)] items-stretch overflow-hidden select-none relative">
       
       {/* Sticky Mobile Navigation Controls Wrapper Layer */}
@@ -1193,6 +1198,7 @@ export default function InventoryPage() {
           </div>
         </form>
       )}
+    </div>
     </div>
   );
 }

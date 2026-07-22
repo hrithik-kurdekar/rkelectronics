@@ -3,6 +3,7 @@ import { supabase } from '@/config/supabase';
 import Link from 'next/link';
 import { Cpu, ArrowRight, Layers, AlertCircle } from 'lucide-react';
 import ProductImage from '@/app/components/ProductImage';
+import StorefrontFooter from '@/app/components/StorefrontFooter';
 import { categorySlugFromName } from '@/lib/category-slug';
 
 export const revalidate = 3600;
@@ -45,7 +46,7 @@ export default async function RKStorefrontHome() {
   const { roots, featured, showingFeatured, error } = await fetchStorefrontPayload();
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-600">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-600 flex flex-col">
       <header className="border-b border-zinc-900 bg-zinc-900/20 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -73,7 +74,10 @@ export default async function RKStorefrontHome() {
         </h1>
       </section>
 
-      <section className="max-w-7xl mx-auto px-6 py-12 border-y border-zinc-900/60 bg-zinc-900/10">
+      <section className="max-w-7xl mx-auto px-6 py-12 border-y border-zinc-900/60 bg-zinc-900/10 w-full">
+        {roots.length === 0 ? (
+          <p className="text-zinc-500 text-sm py-8 text-center">No categories yet.</p>
+        ) : (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-4xl mx-auto">
           {roots.map((root) => (
             <Link key={root.id} href={`/category/${categorySlugFromName(root.name)}`} className="group p-6 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl flex flex-col items-center transition-all hover:border-blue-500/50">
@@ -82,6 +86,7 @@ export default async function RKStorefrontHome() {
             </Link>
           ))}
         </div>
+        )}
       </section>
 
       <section className="max-w-7xl mx-auto px-6 py-20 space-y-8">
@@ -100,7 +105,7 @@ export default async function RKStorefrontHome() {
                   <ProductImage
                     product={prod}
                     alt={prod.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute top-3 right-3 px-2 py-0.5 bg-zinc-950/80 backdrop-blur-md text-[10px] font-bold rounded-md uppercase tracking-wider">{prod.condition}</div>
                 </div>
@@ -119,6 +124,8 @@ export default async function RKStorefrontHome() {
           </div>
         )}
       </section>
+
+      <StorefrontFooter />
     </div>
   );
 }

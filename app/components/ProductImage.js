@@ -1,7 +1,14 @@
+import Image from 'next/image';
 import { ImageIcon } from 'lucide-react';
 import { getProductImages } from '@/lib/product-images';
 
-export default function ProductImage({ product, alt, className = 'w-full h-full object-cover' }) {
+export default function ProductImage({
+  product,
+  alt,
+  className = 'object-cover',
+  sizes = '(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw',
+  priority = false,
+}) {
   const images = getProductImages(product);
   const src = images[0];
 
@@ -14,5 +21,16 @@ export default function ProductImage({ product, alt, className = 'w-full h-full 
     );
   }
 
-  return <img src={src} alt={alt || product?.title || 'Product'} className={className} />;
+  return (
+    <div className="relative w-full h-full">
+      <Image
+        src={src}
+        alt={alt || product?.title || 'Product'}
+        fill
+        className={className}
+        sizes={sizes}
+        priority={priority}
+      />
+    </div>
+  );
 }
