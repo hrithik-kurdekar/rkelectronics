@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight, Cpu, AlertCircle } from 'lucide-react';
 import ProductImage from '@/app/components/ProductImage';
+import StorefrontFooter from '@/app/components/StorefrontFooter';
 import { categoryNameFromSlug } from '@/lib/category-slug';
 
 export const revalidate = 3600;
@@ -41,7 +42,7 @@ export default async function CategoryPage({ params }) {
     .order('created_at', { ascending: false });
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-600">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-600 flex flex-col">
       <header className="border-b border-zinc-900 bg-zinc-900/20 backdrop-blur-md sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3">
@@ -84,7 +85,7 @@ export default async function CategoryPage({ params }) {
                   <ProductImage
                     product={prod}
                     alt={prod.title}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
                   />
                   <div className="absolute top-3 right-3 px-2 py-0.5 bg-zinc-950/80 backdrop-blur-md text-[10px] font-bold rounded-md uppercase tracking-wider">
                     {prod.condition}
@@ -107,6 +108,8 @@ export default async function CategoryPage({ params }) {
           </div>
         )}
       </section>
+
+      <StorefrontFooter />
     </div>
   );
 }

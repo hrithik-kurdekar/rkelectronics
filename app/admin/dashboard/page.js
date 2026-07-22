@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { countProductsByCondition } from '@/lib/product-conditions';
+import ErrorBanner from '@/app/components/ErrorBanner';
 import { 
   Package, 
   CheckCircle2, 
@@ -24,6 +25,7 @@ export default function AdminDashboard() {
   const [stats, setStats] = useState({ total: 0, new: 0, refurbished: 0, used: 0, other: 0 });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [metricsError, setMetricsError] = useState(null);
 
   useEffect(() => {
     pullMetrics();
@@ -32,7 +34,10 @@ export default function AdminDashboard() {
   async function pullMetrics() {
     setRefreshing(true);
     const { data, error } = await supabase.from('products').select('condition');
-    if (!error && data) {
+    if (error) {
+      setMetricsError('Could not load dashboard metrics. Please try again.');
+    } else {
+      setMetricsError(null);
       setStats(countProductsByCondition(data));
     }
     setLoading(false);
@@ -48,6 +53,7 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto p-1 select-none">
+      <ErrorBanner message={metricsError} onDismiss={() => setMetricsError(null)} />
       
       {/* Upper Banner Title Area */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-800 pb-5">

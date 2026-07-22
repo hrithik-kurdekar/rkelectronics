@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase/client';
 import { revalidateStorefront } from '@/app/actions/revalidate-storefront';
 import { Link2, Plus, Edit3, Trash2, X, Mail, Phone, MessageSquare, Globe, Inbox, AlertCircle } from 'lucide-react';
+import ErrorBanner from '@/app/components/ErrorBanner';
 
 export default function ConnectionsPage() {
   const [connections, setConnections] = useState([]);
@@ -22,6 +23,7 @@ export default function ConnectionsPage() {
   });
 
   const [validationError, setValidationError] = useState('');
+  const [loadError, setLoadError] = useState(null);
 
   const categoryOrder = [
     { type: 'Phone', title: 'Phone Numbers', description: 'Voice routing channels and Indian service hotlines.' },
@@ -40,9 +42,12 @@ export default function ConnectionsPage() {
       .select('*')
       .order('created_at', { ascending: true });
     
-    if (!error) {
-      setConnections(data || []);
+    if (error) {
+      setLoadError('Could not load contact connections. Please refresh the page.');
+      return;
     }
+    setLoadError(null);
+    setConnections(data || []);
   };
 
   const openAddModal = (targetType) => {
@@ -193,6 +198,7 @@ export default function ConnectionsPage() {
 
   return (
     <div className="flex-1 w-full p-4 md:p-6 space-y-8 max-w-6xl mx-auto overflow-y-auto select-none">
+      <ErrorBanner message={loadError} onDismiss={() => setLoadError(null)} />
       
       {/* Top Heading Banner */}
       <div className="border-b border-zinc-800 pb-4">
