@@ -2,6 +2,8 @@
 import { supabase } from '@/config/supabase';
 import Link from 'next/link';
 import { Cpu, ArrowRight, Layers } from 'lucide-react';
+import ProductImage from '@/app/components/ProductImage';
+import { categorySlugFromName } from '@/lib/category-slug';
 
 export const revalidate = 3600;
 export const dynamic = 'force-static';
@@ -36,7 +38,7 @@ export default async function RKStorefrontHome() {
       <section className="max-w-7xl mx-auto px-6 py-12 border-y border-zinc-900/60 bg-zinc-900/10">
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-6 max-w-4xl mx-auto">
           {roots.map((root) => (
-            <Link key={root.id} href={`/category/${root.name.toLowerCase()}`} className="group p-6 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl flex flex-col items-center transition-all hover:border-blue-500/50">
+            <Link key={root.id} href={`/category/${categorySlugFromName(root.name)}`} className="group p-6 bg-zinc-900/40 border border-zinc-800/80 rounded-2xl flex flex-col items-center transition-all hover:border-blue-500/50">
               <div className="w-14 h-14 bg-zinc-950 border border-zinc-800 group-hover:text-blue-400 rounded-full flex items-center justify-center mb-4"><Layers className="w-5 h-5" /></div>
               <span className="text-sm font-bold text-zinc-200 group-hover:text-white">{root.name}</span>
             </Link>
@@ -50,8 +52,11 @@ export default async function RKStorefrontHome() {
           {featured.map((prod) => (
             <Link key={prod.id} href={`/product/${prod.sku_code.toLowerCase()}`} className="group bg-zinc-900/30 border border-zinc-800/80 rounded-2xl overflow-hidden flex flex-col h-full transition-all hover:border-zinc-700">
               <div className="relative aspect-square bg-zinc-950 border-b border-zinc-800 overflow-hidden">
-                {/* Safe array index readout fallback */}
-                <img src={prod.image_urls?.[0]} alt={prod.title} loading="lazy" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                <ProductImage
+                  product={prod}
+                  alt={prod.title}
+                  className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                />
                 <div className="absolute top-3 right-3 px-2 py-0.5 bg-zinc-950/80 backdrop-blur-md text-[10px] font-bold rounded-md uppercase tracking-wider">{prod.condition}</div>
               </div>
               <div className="p-5 flex flex-col flex-grow space-y-3">

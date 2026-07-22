@@ -2,7 +2,7 @@
 'use client';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/config/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { Lock, ShieldAlert, CheckCircle } from 'lucide-react';
 
 export default function AdminLoginPortal() {
@@ -40,11 +40,6 @@ export default function AdminLoginPortal() {
         await supabase.auth.signOut();
         throw new Error('Access Authorization Signature Verification Failed.');
       }
-
-      // Bake access parameters to browser session cookies for Edge Middleware tracking
-      // Secure only on HTTPS — browsers drop Secure cookies on http://localhost
-      const secureFlag = window.location.protocol === 'https:' ? '; Secure' : '';
-      document.cookie = `sb-access-token=${data.session.access_token}; path=/; max-age=${data.session.expires_in}; SameSite=Lax${secureFlag}`;
 
       setStatus({ type: 'success', message: 'Access Cleared. Opening Dashboard Panel...' });
       setTimeout(() => router.push('/admin/dashboard'), 1000);

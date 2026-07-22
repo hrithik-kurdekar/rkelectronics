@@ -1,4 +1,6 @@
 import { supabase } from '@/config/supabase';
+import { getProductImages } from '@/lib/product-images';
+import ProductImage from '@/app/components/ProductImage';
 import { notFound } from 'next/navigation';
 import { ShieldAlert, ArrowLeft, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
@@ -7,36 +9,46 @@ export const revalidate = 600;
 
 export async function generateStaticParams() {
   const { data } = await supabase.from('products').select('sku_code');
-  return (data || []).map((p) => ({ id: p.sku_code.toLowerCase() }));
+  return (data || [])
+    .filter((p) => p.sku_code)
+    .map((p) => ({ id: p.sku_code.toLowerCase() }));
 }
 
 export default async function ProductDetailPage({ params }) {
+  const { id } = await params;
+
   const { data: product } = await supabase
     .from('products')
     .select('*')
-    .eq('sku_code', params.id.toUpperCase())
+    .eq('sku_code', id.toUpperCase())
     .single();
 
   if (!product) notFound();
 
-  const encodedText = encodeURIComponent(`Hello RK Electronics, I am interested in purchasing your item:\n💎 Product: ${product.title}\n🆔 SKU Code: ${product.sku_code}\n💰 Listed Value: ₹${parseFloat(product.price).toLocaleString()}`);
-  const whatsappUrl = `https://wa.me/${process.env.NEXT_PUBLIC_CONTACT_WHATSAPP || '15551234567'}?text=${encodedText}`;
+  const images = getProductImages(product);
+  const whatsappNumber = process.env.NEXT_PUBLIC_CONTACT_WHATSAPP;
+  const encodedText = encodeURIComponent(
+    `Hello RK Electronics, I am interested in purchasing your item:\n💎 Product: ${product.title}\n🆔 SKU Code: ${product.sku_code}\n💰 Listed Value: ₹${parseFloat(product.price).toLocaleString()}`
+  );
+  const whatsappUrl = whatsappNumber
+    ? `https://wa.me/${whatsappNumber}?text=${encodedText}`
+    : null;
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 p-6 md:p-12">
       <div className="max-w-6xl mx-auto space-y-8">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors"><ArrowLeft className="w-4 h-4" /> Return to Catalog</Link>
-        
+        <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors">
+          <ArrowLeft className="w-4 h-4" /> Return to Catalog
+        </Link>
+
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 bg-zinc-900/40 border border-zinc-800 p-6 md:p-8 rounded-3xl backdrop-blur-md">
-          {/* Dynamic Images Gallery Loop */}
           <div className="space-y-4">
             <div className="aspect-square w-full bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-800">
-              <img src={product.image_urls[0]} alt={product.title} className="w-full h-full object-cover" />
+              <ProductImage product={product} alt={product.title} />
             </div>
-            {/* Show alternative media previews if multiple exist inside our string array */}
-            {product.image_urls.length > 1 && (
+            {images.length > 1 && (
               <div className="grid grid-cols-4 gap-3">
-                {product.image_urls.map((url, i) => (
+                {images.map((url, i) => (
                   <div key={i} className="aspect-square bg-zinc-950 border border-zinc-800 rounded-xl overflow-hidden opacity-70 hover:opacity-100 transition-opacity">
                     <img src={url} className="w-full h-full object-cover" alt="" />
                   </div>
@@ -45,7 +57,6 @@ export default async function ProductDetailPage({ params }) {
             )}
           </div>
 
-          {/* Catalog Metadata Details Workspace */}
           <div className="flex flex-col justify-between space-y-6">
             <div className="space-y-4">
               <div className="flex flex-wrap gap-2">
@@ -54,7 +65,7 @@ export default async function ProductDetailPage({ params }) {
               </div>
               <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white leading-tight">{product.title}</h1>
               <div className="text-3xl font-black text-white">₹{parseFloat(product.price).toLocaleString()}</div>
-              
+
               <div className="border-t border-zinc-800/80 pt-4 space-y-2">
                 <h4 className="text-xs font-bold tracking-wider uppercase text-zinc-400">Specifications Inventory Breakdown</h4>
                 <p className="text-sm text-zinc-300 leading-relaxed font-medium">{product.description || 'No descriptive context parameters logged for this product profile entry.'}</p>
@@ -68,9 +79,13 @@ export default async function ProductDetailPage({ params }) {
               )}
             </div>
 
-            <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 tracking-wide shadow-lg shadow-blue-600/10">
-              <MessageSquare className="w-4 h-4" /> Engage Conversion Chat Securely
-            </a>
+            {whatsappUrl ? (
+              <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="w-full py-4 bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm rounded-xl transition-all flex items-center justify-center gap-2 tracking-wide shadow-lg shadow-blue-600/10">
+                <MessageSquare className="w-4 h-4" /> Engage Conversion Chat Securely
+              </a>
+            ) : (
+              <p className="text-sm text-zinc-500 text-center">Contact via WhatsApp is not configured.</p>
+            )}
           </div>
         </div>
       </div>

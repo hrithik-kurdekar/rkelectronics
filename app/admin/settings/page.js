@@ -2,7 +2,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { supabase } from '@/config/supabase';
+import { supabase } from '@/lib/supabase/client';
 import { Link2, Plus, Edit3, Trash2, X, Mail, Phone, MessageSquare, Globe, Inbox, AlertCircle } from 'lucide-react';
 
 export default function ConnectionsPage() {
