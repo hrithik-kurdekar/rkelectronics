@@ -37,8 +37,8 @@ function useCategoryColumns() {
   return cols;
 }
 
-function CategoryCover({ root }) {
-  const src = root.image_url;
+function CategoryCover({ item }) {
+  const src = item.image_url;
 
   if (!src) {
     return (
@@ -71,31 +71,43 @@ function CategoryCover({ root }) {
   );
 }
 
-export default function CategoryGrid({ roots = [] }) {
+export default function CategoryGrid({
+  items,
+  roots,
+  pathPrefix = '',
+  emptyLabel = 'No categories yet.',
+}) {
+  const list = items || roots || [];
   const cols = useCategoryColumns();
   const [expanded, setExpanded] = useState(false);
   const previewCount = cols * 2;
-  const needsToggle = roots.length > previewCount;
-  const visible = expanded || !needsToggle ? roots : roots.slice(0, previewCount);
+  const needsToggle = list.length > previewCount;
+  const visible = expanded || !needsToggle ? list : list.slice(0, previewCount);
 
-  if (roots.length === 0) {
-    return <p className="text-zinc-500 text-sm py-8 text-center">No categories yet.</p>;
+  const resolveHref = (item) => {
+    const slug = categorySlugFromName(item.name);
+    if (pathPrefix) return `${pathPrefix}/${slug}`;
+    return `/category/${slug}`;
+  };
+
+  if (list.length === 0) {
+    return <p className="text-zinc-500 text-sm py-8 text-center">{emptyLabel}</p>;
   }
 
   return (
     <div className="space-y-5 sm:space-y-6">
       <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7 2xl:grid-cols-8 gap-x-2 gap-y-3 sm:gap-x-2.5 sm:gap-y-3.5 md:gap-x-3 md:gap-y-4">
-        {visible.map((root) => (
+        {visible.map((item) => (
           <Link
-            key={root.id}
-            href={`/category/${categorySlugFromName(root.name)}`}
+            key={item.id}
+            href={resolveHref(item)}
             className="group flex flex-col rounded-xl overflow-hidden border border-zinc-800/90 bg-zinc-900/40 transition duration-300 hover:border-blue-500/45 hover:bg-zinc-900/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/50"
           >
             <div className="relative aspect-square overflow-hidden bg-zinc-950 border-b border-zinc-800/80">
-              <CategoryCover root={root} />
+              <CategoryCover item={item} />
             </div>
             <span className="px-1.5 py-2 sm:px-2 sm:py-2.5 text-[10px] sm:text-[11px] md:text-xs font-semibold leading-snug text-zinc-200 text-center line-clamp-2 group-hover:text-white transition-colors">
-              {root.name}
+              {item.name}
             </span>
           </Link>
         ))}
@@ -108,7 +120,7 @@ export default function CategoryGrid({ roots = [] }) {
             onClick={() => setExpanded((v) => !v)}
             className="h-9 px-4 rounded-lg border border-zinc-700/80 text-[11px] font-bold uppercase tracking-wide text-zinc-300 hover:border-blue-500/40 hover:text-blue-300 hover:bg-blue-500/5 transition"
           >
-            {expanded ? 'Show less' : `Show all (${roots.length})`}
+            {expanded ? 'Show less' : `Show all (${list.length})`}
           </button>
         </div>
       )}
