@@ -235,7 +235,8 @@ export default function InventoryPage() {
     description: '',   
     defect_notes: '',  
     is_featured: false,
-    photos: [],        
+    photos: [],
+    categoryImage: null, // { file, preview, url } | null — single cover for root/sub/brand
     root_category_id: '',
     sub_category_id: '',
     brand_id: '',
@@ -476,6 +477,77 @@ export default function InventoryPage() {
         URL.revokeObjectURL(photo.preview);
       }
     });
+    if (formData.categoryImage?.preview?.startsWith('blob:')) {
+      URL.revokeObjectURL(formData.categoryImage.preview);
+    }
+  };
+
+  const handleCategoryImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+
+    if (formData.categoryImage?.preview?.startsWith('blob:')) {
+      URL.revokeObjectURL(formData.categoryImage.preview);
+    }
+    if (formData.categoryImage?.url) {
+      setPendingStorageRemovals((prev) => [...prev, formData.categoryImage.url]);
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      categoryImage: {
+        file,
+        preview: URL.createObjectURL(file),
+        url: '',
+      },
+    }));
+  };
+
+  const removeCategoryImage = () => {
+    if (formData.categoryImage?.preview?.startsWith('blob:')) {
+      URL.revokeObjectURL(formData.categoryImage.preview);
+    }
+    if (formData.categoryImage?.url) {
+      setPendingStorageRemovals((prev) => [...prev, formData.categoryImage.url]);
+    }
+    setFormData((prev) => ({ ...prev, categoryImage: null }));
+  };
+
+  const collectDescendantCategoryImageUrls = async (type, id) => {
+    const urls = [];
+    const { data: self } = await supabase.from('categories').select('image_url').eq('id', id).single();
+    if (self?.image_url) urls.push(self.image_url);
+
+    if (type === 'root') {
+      const { data: childSubs } = await supabase
+        .from('categories')
+        .select('id, image_url')
+        .eq('type', 'sub')
+        .eq('parent_id', id);
+      for (const sub of childSubs || []) {
+        if (sub.image_url) urls.push(sub.image_url);
+        const { data: childBrands } = await supabase
+          .from('categories')
+          .select('image_url')
+          .eq('type', 'brand')
+          .eq('parent_id', sub.id);
+        for (const brand of childBrands || []) {
+          if (brand.image_url) urls.push(brand.image_url);
+        }
+      }
+    } else if (type === 'sub') {
+      const { data: childBrands } = await supabase
+        .from('categories')
+        .select('image_url')
+        .eq('type', 'brand')
+        .eq('parent_id', id);
+      for (const brand of childBrands || []) {
+        if (brand.image_url) urls.push(brand.image_url);
+      }
+    }
+
+    return [...new Set(urls.filter(Boolean))];
   };
 
   const handleModalRootChange = async (rootId) => {
@@ -526,7 +598,7 @@ export default function InventoryPage() {
 
     setFormData({
       name: '', price: 0, condition: 'New', description: '', defect_notes: '', is_featured: false,
-      photos: [], parent_id: defaultParent,
+      photos: [], categoryImage: null, parent_id: defaultParent,
       root_category_id: selectedRoot || '',
       sub_category_id: selectedSub || '',
       brand_id: selectedBrand || ''
@@ -564,6 +636,9 @@ export default function InventoryPage() {
       defect_notes: item.defect_notes || '',
       is_featured: item.is_featured || false,
       photos: item.image_urls ? item.image_urls.map(url => ({ file: null, preview: url, url })) : [],
+      categoryImage: item.image_url
+        ? { file: null, preview: item.image_url, url: item.image_url }
+        : null,
       parent_id: item.parent_id || null,
       root_category_id: item.root_category_id || selectedRoot || '',
       sub_category_id: item.sub_category_id || selectedSub || '',
@@ -618,7 +693,34 @@ export default function InventoryPage() {
     try {
       if (modalType !== 'product') {
         const assignedParent = modalType === 'sub' ? modalRootId : modalType === 'brand' ? formData.parent_id : null;
-        const payload = { name: formData.name, type: modalType, parent_id: assignedParent };
+
+        let imageUrl = formData.categoryImage?.url || null;
+        if (formData.categoryImage?.file) {
+          const compressedFileBlob = await compressImageToWebp(formData.categoryImage.file, MEDIA_LIMITS);
+          const filename = `categories/${crypto.randomUUID()}.webp`;
+          const { error: uploadError } = await supabase.storage
+            .from(BUCKET_NAME)
+            .upload(filename, compressedFileBlob, {
+              contentType: 'image/webp',
+              cacheControl: '3600',
+            });
+          if (uploadError) throw uploadError;
+          const { data: publicUrlData } = supabase.storage.from(BUCKET_NAME).getPublicUrl(filename);
+          imageUrl = publicUrlData.publicUrl;
+        }
+
+        const previousUrl = isEditMode ? editingItem?.image_url || null : null;
+        const urlsToDelete = [...pendingStorageRemovals];
+        if (previousUrl && previousUrl !== imageUrl) {
+          urlsToDelete.push(previousUrl);
+        }
+
+        const payload = {
+          name: formData.name,
+          type: modalType,
+          parent_id: assignedParent,
+          image_url: imageUrl,
+        };
 
         if (isEditMode) {
           const { error } = await supabase.from('categories').update(payload).eq('id', editingItem.id);
@@ -632,6 +734,11 @@ export default function InventoryPage() {
           if (modalType === 'sub') setSelectedSub(insertedData.id);
           if (modalType === 'brand') setSelectedBrand(insertedData.id);
         }
+
+        if (urlsToDelete.length > 0) {
+          await removeStorageUrls([...new Set(urlsToDelete)]);
+        }
+        setPendingStorageRemovals([]);
       } else {
         let uploadedUrls = formData.photos.filter((p) => p.url).map((p) => p.url);
         const pendingUploadSlots = formData.photos.filter((p) => p.file);
@@ -765,6 +872,8 @@ export default function InventoryPage() {
           .eq('id', id)
           .single();
         imageUrlsToRemove = existing?.image_urls || [];
+      } else {
+        imageUrlsToRemove = await collectDescendantCategoryImageUrls(type, id);
       }
 
       const table = type === 'product' ? 'products' : 'categories';
@@ -774,7 +883,7 @@ export default function InventoryPage() {
         return;
       }
 
-      if (type === 'product' && imageUrlsToRemove.length > 0) {
+      if (imageUrlsToRemove.length > 0) {
         await removeStorageUrls(imageUrlsToRemove);
       }
       
@@ -876,6 +985,9 @@ export default function InventoryPage() {
               <div key={item.id} draggable onDragStart={() => handleDragStart(item)} onDragOver={handleDragOver} onDrop={() => handleDropOnItem(item, roots, 'root')} onClick={() => handleRootSelect(item.id)} className={`p-2 rounded-lg flex items-center justify-between cursor-pointer border transition group w-full min-w-0 overflow-hidden ${selectedRoot === item.id ? 'bg-emerald-950/20 border-emerald-500/60 text-emerald-300' : 'bg-zinc-950 border-zinc-800/50 hover:bg-zinc-900'}`}>
                 <div className="flex items-center gap-2 min-w-0">
                   <GripVertical className="w-3.5 h-3.5 text-zinc-600 cursor-grab group-hover:text-zinc-400 flex-shrink-0" />
+                  {item.image_url ? (
+                    <img src={item.image_url} alt="" className="w-6 h-6 rounded object-cover flex-shrink-0 border border-zinc-800" />
+                  ) : null}
                   <span className="text-xs font-medium truncate">{item.name}</span>
                 </div>
                 <div className="flex items-center gap-1.5 pl-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -925,6 +1037,9 @@ export default function InventoryPage() {
               <div key={item.id} draggable onDragStart={() => handleDragStart(item)} onDragOver={handleDragOver} onDrop={() => handleDropOnItem(item, subs, 'sub')} onClick={() => handleSubSelect(item.id)} className={`p-2 rounded-lg flex items-center justify-between cursor-pointer border transition group w-full min-w-0 overflow-hidden ${selectedSub === item.id ? 'bg-blue-950/20 border-blue-500/60 text-blue-300' : 'bg-zinc-950 border-zinc-800/50 hover:bg-zinc-900'}`}>
                 <div className="flex items-center gap-2 min-w-0">
                   <GripVertical className="w-3.5 h-3.5 text-zinc-600 cursor-grab group-hover:text-zinc-400 flex-shrink-0" />
+                  {item.image_url ? (
+                    <img src={item.image_url} alt="" className="w-6 h-6 rounded object-cover flex-shrink-0 border border-zinc-800" />
+                  ) : null}
                   <span className="text-xs font-medium truncate">{item.name}</span>
                 </div>
                 <div className="flex items-center gap-1.5 pl-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -974,6 +1089,9 @@ export default function InventoryPage() {
               <div key={item.id} draggable onDragStart={() => handleDragStart(item)} onDragOver={handleDragOver} onDrop={() => handleDropOnItem(item, brands, 'brand')} onClick={() => handleBrandSelect(item.id)} className={`p-2 rounded-lg flex items-center justify-between cursor-pointer border transition group w-full min-w-0 overflow-hidden ${selectedBrand === item.id ? 'bg-purple-950/20 border-purple-500/60 text-purple-300' : 'bg-zinc-950 border-zinc-800/50 hover:bg-zinc-900'}`}>
                 <div className="flex items-center gap-2 min-w-0">
                   <GripVertical className="w-3.5 h-3.5 text-zinc-600 cursor-grab group-hover:text-zinc-400 flex-shrink-0" />
+                  {item.image_url ? (
+                    <img src={item.image_url} alt="" className="w-6 h-6 rounded object-cover flex-shrink-0 border border-zinc-800" />
+                  ) : null}
                   <span className="text-xs font-medium truncate">{item.name}</span>
                 </div>
                 <div className="flex items-center gap-1.5 pl-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -1281,7 +1399,7 @@ export default function InventoryPage() {
             
             <div className="flex items-center justify-between border-b border-zinc-800 pb-2 mb-2.5 flex-shrink-0">
               <h3 className="text-xs font-bold tracking-tight text-white capitalize">{isEditMode ? 'Modify' : 'Create New'} {modalType} Template</h3>
-              <button type="button" onClick={() => { clearModalPhotoPreviews(); setIsModalOpen(false); }} className="p-1 text-zinc-500 hover:text-zinc-200 rounded-lg"><X className="w-4 h-4" /></button>
+              <button type="button" onClick={() => { clearModalPhotoPreviews(); setPendingStorageRemovals([]); setIsModalOpen(false); }} className="p-1 text-zinc-500 hover:text-zinc-200 rounded-lg"><X className="w-4 h-4" /></button>
             </div>
             
             <div className="space-y-3 flex-1 overflow-y-auto pr-0.5 min-h-0">
@@ -1389,6 +1507,44 @@ export default function InventoryPage() {
                 </label>
                 <input required type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800/80 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 placeholder-zinc-700" placeholder="Insert configuration metric title..."/>
               </div>
+
+              {modalType !== 'product' && (
+                <div className="space-y-1.5">
+                  <label className="text-[9px] font-extrabold tracking-wider uppercase text-zinc-400 block">
+                    Category photo
+                    <span className="ml-1 font-normal normal-case tracking-normal text-zinc-600">
+                      optional · {MEDIA_LIMITS.imageMaxEdge}px WebP
+                    </span>
+                  </label>
+                  <div className="flex items-center gap-3">
+                    {formData.categoryImage ? (
+                      <div className="relative w-16 h-16 rounded-lg border border-zinc-800 overflow-hidden bg-zinc-950 flex-shrink-0">
+                        <img src={formData.categoryImage.preview} alt="" className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={removeCategoryImage}
+                          className="absolute top-0.5 right-0.5 bg-black/70 hover:bg-red-600 text-white p-0.5 rounded transition"
+                          aria-label="Remove category photo"
+                        >
+                          <X className="w-2.5 h-2.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <label className="cursor-pointer w-16 h-16 border border-dashed border-zinc-800 hover:border-zinc-600 rounded-lg flex flex-col items-center justify-center bg-zinc-950/40 text-zinc-500 hover:text-zinc-300 transition flex-shrink-0">
+                        <ImagePlus className="w-4 h-4 mb-0.5" />
+                        <span className="text-[8px] font-bold uppercase tracking-wider">Add</span>
+                        <input type="file" accept="image/*" className="hidden" onChange={handleCategoryImageUpload} />
+                      </label>
+                    )}
+                    {formData.categoryImage && (
+                      <label className="cursor-pointer text-[11px] font-semibold text-blue-400 hover:text-blue-300">
+                        Replace
+                        <input type="file" accept="image/*" className="hidden" onChange={handleCategoryImageUpload} />
+                      </label>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {modalType === 'product' && (
                 <>

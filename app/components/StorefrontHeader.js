@@ -108,7 +108,7 @@ export default function StorefrontHeader({ roots = [], demo = false }) {
       </div>
 
       {mobileOpen && (
-        <div className="md:hidden border-t border-zinc-800 bg-zinc-950 px-4 py-3 space-y-3">
+        <div className={`md:hidden border-t border-zinc-800 bg-zinc-950 ${STOREFRONT_CONTAINER} py-3 space-y-3`}>
           <div>
             <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">Categories</p>
             <div className="max-h-48 overflow-y-auto space-y-0.5 pr-1">

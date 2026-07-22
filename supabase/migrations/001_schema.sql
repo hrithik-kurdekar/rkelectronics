@@ -5,6 +5,7 @@ create table if not exists categories (
   name text not null,
   type text not null check (type in ('root', 'sub', 'brand')),
   parent_id uuid references categories(id) on delete cascade,
+  image_url text,
   sort_order int default 0,
   created_at timestamptz default now()
 );

@@ -64,6 +64,7 @@ for (let r = 0; r < ROOT_COUNT; r++) {
     name: rootName,
     type: 'root',
     parent_id: null,
+    image_url: DEMO_IMAGE,
     sort_order: r + 1,
     created_at: now,
   });
@@ -80,6 +81,7 @@ for (let r = 0; r < ROOT_COUNT; r++) {
         : `Sub ${r + 1}.${s + 1}`,
       type: 'sub',
       parent_id: rootId,
+      image_url: DEMO_IMAGE,
       sort_order: s + 1,
       created_at: now,
     });
@@ -93,6 +95,7 @@ for (let r = 0; r < ROOT_COUNT; r++) {
         name: brandName,
         type: 'brand',
         parent_id: subId,
+        image_url: DEMO_IMAGE,
         sort_order: b + 1,
         created_at: now,
       });

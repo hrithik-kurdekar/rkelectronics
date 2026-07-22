@@ -51,7 +51,7 @@ export default async function RKStorefrontHome() {
         <div className={`${STOREFRONT_CONTAINER} py-12 sm:py-16 space-y-6`}>
           <div className="space-y-1">
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-white">Shop by category</h2>
-            <p className="text-sm text-zinc-500">Two rows by default — expand anytime to see the full catalog map.</p>
+            <p className="text-sm text-zinc-500">Browse the catalog map — expand to see every root category.</p>
           </div>
           <CategoryGrid roots={roots} />
         </div>
