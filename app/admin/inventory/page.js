@@ -718,7 +718,7 @@ export default function InventoryPage() {
           </div>
         </div>
         
-        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full">
+        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full pr-2">
           {roots.length === 0 ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-zinc-800 border-dashed rounded-xl gap-2 w-full"><Inbox className="w-4 h-4" /> <span className="text-xs">No Roots</span></div>
           ) : filteredRoots.length === 0 ? (
@@ -753,7 +753,7 @@ export default function InventoryPage() {
           </div>
         </div>
         
-        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full">
+        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full pr-2">
           {!selectedRoot ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800/50 rounded-xl p-4 text-center gap-1.5 w-full"><AlertCircle className="w-4 h-4 text-zinc-500" /><span className="text-[11px]">Select a Root Category first</span></div>
           ) : subs.length === 0 ? (
@@ -790,7 +790,7 @@ export default function InventoryPage() {
           </div>
         </div>
         
-        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full">
+        <div className="space-y-2 flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full pr-2">
           {!selectedSub ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800/50 rounded-xl p-4 text-center gap-1.5 w-full"><AlertCircle className="w-4 h-4 text-zinc-500" /><span className="text-[11px]">Select a Sub Category first</span></div>
           ) : brands.length === 0 ? (
@@ -824,6 +824,12 @@ export default function InventoryPage() {
             <span className="hidden md:inline">Products</span>
           </h3>
 
+          {renderColumnSearch(
+            searchQuery,
+            setSearchQuery,
+            productSearchScope === 'all' ? 'All…' : 'Brand…'
+          )}
+
           <button
             type="button"
             onClick={() => {
@@ -834,25 +840,20 @@ export default function InventoryPage() {
               }
             }}
             disabled={productSearchScope === 'all' && !selectedBrand}
-            className={`h-8 min-w-[2.25rem] px-1.5 flex-shrink-0 rounded-md border text-[9px] font-bold uppercase tracking-wide transition disabled:opacity-30 ${
+            aria-pressed={productSearchScope === 'all'}
+            className={`h-8 px-2 flex-shrink-0 rounded-md border text-[9px] font-bold uppercase tracking-wide transition disabled:opacity-30 ${
               productSearchScope === 'all'
-                ? 'border-orange-500/40 bg-orange-950/40 text-orange-400'
-                : 'border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-zinc-200'
+                ? 'border-orange-500/50 bg-orange-950/50 text-orange-400'
+                : 'border-zinc-800 bg-zinc-950 text-zinc-500 hover:text-zinc-300'
             }`}
             title={
               productSearchScope === 'all'
-                ? 'Searching all products — click for brand only'
-                : 'Searching this brand — click for all products'
+                ? 'All products search is on — click to search this brand only'
+                : 'Search this brand only — click to search all products'
             }
           >
-            {productSearchScope === 'all' ? 'All' : 'Br'}
+            All
           </button>
-
-          {renderColumnSearch(
-            searchQuery,
-            setSearchQuery,
-            productSearchScope === 'all' ? 'All…' : 'Brand…'
-          )}
 
           <div className="flex items-center gap-1.5 flex-shrink-0">
             <div className="relative flex-shrink-0" ref={dropdownRef}>
@@ -897,7 +898,7 @@ export default function InventoryPage() {
           </p>
         )}
         
-        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden w-full pr-2">
           {!selectedBrand && !isSearchingGlobally ? (
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800/50 rounded-xl p-4 text-center gap-1.5 w-full"><AlertCircle className="w-4 h-4 text-zinc-500" /><span className="text-[11px]">Select a Brand or search All above</span></div>
           ) : displayedProducts.length === 0 ? (
