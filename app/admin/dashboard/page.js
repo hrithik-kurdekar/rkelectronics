@@ -10,7 +10,7 @@ import {
   CheckCircle2,
   Clock,
   Database,
-  HardDrive,
+  Gauge,
   Link2,
   Package,
   RefreshCw,
@@ -58,6 +58,47 @@ function formatRelativeTime(iso) {
   if (hrs < 48) return `${hrs}h ago`;
   const days = Math.floor(hrs / 24);
   return `${days}d ago`;
+}
+
+function formatBytes(bytes) {
+  if (bytes == null) return '—';
+  const gb = bytes / 1024 ** 3;
+  if (gb >= 1) return `${gb.toFixed(2)} GB`;
+  const mb = bytes / 1024 ** 2;
+  if (mb >= 1) return `${mb.toFixed(1)} MB`;
+  return `${Math.round(bytes / 1024)} KB`;
+}
+
+function QuotaRing({ percent }) {
+  const p = Math.min(100, percent ?? 0);
+  const color =
+    p >= 90 ? 'text-red-400' : p >= 70 ? 'text-amber-400' : 'text-emerald-400';
+
+  return (
+    <div className={`relative w-10 h-10 flex-shrink-0 ${color}`}>
+      <svg viewBox="0 0 36 36" className="w-full h-full -rotate-90">
+        <circle
+          cx="18"
+          cy="18"
+          r="15.5"
+          fill="none"
+          stroke="currentColor"
+          strokeOpacity="0.15"
+          strokeWidth="3"
+        />
+        <circle
+          cx="18"
+          cy="18"
+          r="15.5"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="3"
+          strokeDasharray={`${p} 100`}
+          strokeLinecap="round"
+        />
+      </svg>
+    </div>
+  );
 }
 
 function MetricCard({ title, value, icon: Icon, color, className = '' }) {
@@ -166,7 +207,7 @@ export default function AdminDashboard() {
             <Activity className="w-5 h-5 text-purple-500" /> Store dashboard
           </h1>
           <p className="text-zinc-500 text-xs sm:text-sm max-w-2xl">
-            Catalog, traffic, Supabase health, and keep-alive status.
+            Catalog, traffic, Supabase health, free plan usage, and keep-alive status.
             {metrics?.demoMode && ' Running in demo mode — live metrics are limited.'}
           </p>
         </div>
@@ -266,6 +307,15 @@ export default function AdminDashboard() {
                   <dd className="text-lg font-bold text-white">{metrics.categories.brands}</dd>
                 </div>
               </dl>
+              {metrics.newestProduct && (
+                <div className="border-t border-zinc-800/80 pt-3">
+                  <p className="text-[10px] uppercase tracking-wider text-zinc-600 mb-1">
+                    Newest listing
+                  </p>
+                  <p className="text-sm text-zinc-300 truncate">{metrics.newestProduct.title}</p>
+                  <p className="text-xs font-mono text-zinc-600">{metrics.newestProduct.sku_code}</p>
+                </div>
+              )}
             </Panel>
 
             <Panel
@@ -292,9 +342,43 @@ export default function AdminDashboard() {
             </Panel>
           </div>
 
+          <Panel
+            title="Free plan usage"
+            description={metrics.quota?.billingCycle || 'Supabase billing cycle'}
+            icon={Gauge}
+            iconClass="text-sky-400"
+          >
+            <div className="flex items-center justify-between">
+              <StatusBadge status={metrics.quota?.status} />
+            </div>
+            {metrics.quota?.status === 'ok' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                {metrics.quota.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center gap-3 p-3 rounded-lg bg-zinc-950/50 border border-zinc-800/60"
+                  >
+                    <QuotaRing percent={item.percent} />
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-zinc-300">{item.label}</p>
+                      <p className="text-sm font-mono text-zinc-400">
+                        {formatBytes(item.usedBytes)}
+                        {!item.unlimited && item.limitBytes != null && (
+                          <> / {formatBytes(item.limitBytes)}</>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-zinc-500">{metrics.quota?.message}</p>
+            )}
+          </Panel>
+
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-3">
             <Panel
-              className="xl:col-span-4"
+              className="xl:col-span-6"
               title="Storefront traffic"
               description="Page views recorded from public routes."
               icon={TrendingUp}
@@ -335,7 +419,7 @@ export default function AdminDashboard() {
             </Panel>
 
             <Panel
-              className="xl:col-span-4"
+              className="xl:col-span-6"
               title="Connections"
               description="Contact vs social channels configured in settings."
               icon={BarChart3}
@@ -375,32 +459,6 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </div>
-            </Panel>
-
-            <Panel
-              className="md:col-span-2 xl:col-span-4"
-              title="Storage"
-              description="Product media bucket object count (requires service role)."
-              icon={HardDrive}
-              iconClass="text-violet-400"
-            >
-              <div className="flex items-center justify-between">
-                <StatusBadge status={metrics.storage.status} />
-              </div>
-              {metrics.storage.status === 'ok' ? (
-                <p className="text-2xl font-black text-white">{metrics.storage.objectCount}</p>
-              ) : (
-                <p className="text-sm text-zinc-500">{metrics.storage.message}</p>
-              )}
-              {metrics.newestProduct && (
-                <div className="border-t border-zinc-800/80 pt-3 mt-1">
-                  <p className="text-[10px] uppercase tracking-wider text-zinc-600 mb-1">
-                    Newest listing
-                  </p>
-                  <p className="text-sm text-zinc-300 truncate">{metrics.newestProduct.title}</p>
-                  <p className="text-xs font-mono text-zinc-600">{metrics.newestProduct.sku_code}</p>
-                </div>
-              )}
             </Panel>
           </div>
 
