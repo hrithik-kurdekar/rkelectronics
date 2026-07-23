@@ -1186,7 +1186,7 @@ export default function InventoryPage() {
             <div className="h-32 flex flex-col items-center justify-center text-zinc-600 border border-dashed border-zinc-800 rounded-xl gap-2 w-full"><Inbox className="w-4 h-4" /><span className="text-xs">No Products found</span></div>
           ) : (
             /* Standardized Compact Responsive E-commerce Grid Matrix */
-            <div className="grid grid-cols-[repeat(auto-fill,minmax(150px,1fr))] gap-3 pb-2 w-full min-w-0">
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(168px,1fr))] gap-3 pb-2 w-full min-w-0">
               {displayedProducts.map(item => (
                 <div 
                   key={item.id} 
@@ -1231,17 +1231,15 @@ export default function InventoryPage() {
                   </div>
 
                   {/* Description Details Layout Container */}
-                  <div className="p-2.5 bg-zinc-950/40 flex flex-col gap-1.5 flex-1 justify-center">
-                    {/* Aligned SKU Block directly centered inside header */}
-                    <div className="text-[9px] font-mono font-bold tracking-wide text-zinc-500 text-center select-all bg-zinc-900/40 py-0.5 px-1 rounded border border-zinc-900/40 truncate">
+                  <div className="p-3 bg-zinc-950/40 flex flex-col gap-2 flex-1 justify-center">
+                    <div className="text-xs font-mono font-bold tracking-wide text-yellow-400 text-center select-all py-0.5 truncate">
                       {item.sku_code}
                     </div>
-                    {/* Balanced Bottom Baseline Split Row (Name Left | Price Right) */}
-                    <div className="flex items-center justify-between gap-2 border-t border-zinc-900/60 pt-1.5 min-w-0">
-                      <h4 className="text-[10px] font-medium text-zinc-300 truncate leading-tight flex-1 text-left" title={item.title}>
+                    <div className="flex items-center justify-between gap-2 border-t border-zinc-900/60 pt-2 min-w-0">
+                      <h4 className="text-xs font-semibold text-zinc-100 truncate leading-snug flex-1 text-left" title={item.title}>
                         {item.title}
                       </h4>
-                      <span className="text-[10px] font-bold text-emerald-400 font-mono text-right flex-shrink-0">
+                      <span className="text-xs font-bold text-emerald-300 font-mono text-right flex-shrink-0">
                         ₹{item.price.toLocaleString('en-IN')}
                       </span>
                     </div>
