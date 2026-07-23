@@ -1,33 +1,8 @@
 import Link from 'next/link';
-import { Cpu, Mail, Phone, MessageSquare, Globe } from 'lucide-react';
+import { Cpu } from 'lucide-react';
 import { fetchActiveConnections } from '@/lib/data';
 import { STOREFRONT_CONTAINER } from '@/lib/storefront-layout';
-
-function iconForType(type) {
-  switch (type) {
-    case 'Email':
-      return Mail;
-    case 'Phone':
-      return Phone;
-    case 'Chat Link':
-      return MessageSquare;
-    default:
-      return Globe;
-  }
-}
-
-function hrefForConnection(connection) {
-  const value = connection.value?.trim();
-  if (!value) return null;
-
-  if (value.startsWith('http') || value.startsWith('mailto:') || value.startsWith('tel:')) {
-    return value;
-  }
-
-  if (connection.type === 'Email') return `mailto:${value}`;
-  if (connection.type === 'Phone') return `tel:${value}`;
-  return value;
-}
+import { iconForConnectionType, hrefForConnection } from '@/lib/connections';
 
 export default async function StorefrontFooter() {
   const { data: connections } = await fetchActiveConnections();
@@ -82,7 +57,7 @@ export default async function StorefrontFooter() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {list.map((connection) => {
-                  const Icon = iconForType(connection.type);
+                  const Icon = iconForConnectionType(connection.type);
                   const href = hrefForConnection(connection);
 
                   return (
