@@ -8,8 +8,9 @@ import StorefrontFooter from '@/app/components/StorefrontFooter';
 import { categorySlugFromName } from '@/lib/category-slug';
 import { matchCategoryBySlug } from '@/lib/category-path';
 import {
-  fetchRootCategories,
-  fetchCategories,
+  fetchRootsWithProducts,
+  fetchSubsWithProducts,
+  fetchBrandsWithProducts,
   fetchProductsForBrand,
   fetchBrowseSections,
   isDemoMode,
@@ -24,18 +25,18 @@ export const revalidate = 3600;
 
 export default async function BrandCategoryPage({ params }) {
   const { slug, subSlug, brandSlug } = await params;
-  const { data: roots } = await fetchRootCategories();
+  const { data: roots } = await fetchRootsWithProducts();
   const demo = isDemoMode();
 
   const root = matchCategoryBySlug(roots, slug);
   if (!root) notFound();
 
-  const { data: subs } = await fetchCategories({ type: 'sub', parentId: root.id });
+  const { data: subs } = await fetchSubsWithProducts(root.id);
   const sub = matchCategoryBySlug(subs, subSlug);
   if (!sub) notFound();
 
-  const { data: allBrands } = await fetchCategories({ type: 'brand', parentId: sub.id });
-  const brand = matchCategoryBySlug(allBrands, brandSlug);
+  const { data: brands } = await fetchBrandsWithProducts(sub.id);
+  const brand = matchCategoryBySlug(brands, brandSlug);
   if (!brand) notFound();
 
   const { data: products, error: productsError } = await fetchProductsForBrand(brand.id);

@@ -8,8 +8,8 @@ import StorefrontFooter from '@/app/components/StorefrontFooter';
 import { categorySlugFromName } from '@/lib/category-slug';
 import { matchCategoryBySlug } from '@/lib/category-path';
 import {
-  fetchRootCategories,
-  fetchCategories,
+  fetchRootsWithProducts,
+  fetchSubsWithProducts,
   fetchBrowseSections,
   isDemoMode,
 } from '@/lib/data';
@@ -20,7 +20,7 @@ export const revalidate = 3600;
 
 export default async function RootCategoryPage({ params }) {
   const { slug } = await params;
-  const { data: roots, error: rootsError } = await fetchRootCategories();
+  const { data: roots, error: rootsError } = await fetchRootsWithProducts();
   const demo = isDemoMode();
 
   if (rootsError) {
@@ -37,7 +37,7 @@ export default async function RootCategoryPage({ params }) {
   const root = matchCategoryBySlug(roots, slug);
   if (!root) notFound();
 
-  const { data: subs } = await fetchCategories({ type: 'sub', parentId: root.id });
+  const { data: subs } = await fetchSubsWithProducts(root.id);
   const {
     sections,
     hasMore,
@@ -63,7 +63,7 @@ export default async function RootCategoryPage({ params }) {
         <div>
           <h1 className="text-3xl font-extrabold tracking-tight text-white">{root.name}</h1>
           <p className="text-sm text-zinc-500 mt-2">
-            {(subs || []).length} sub-categories — browse two rows from each, then explore.
+            {(subs || []).length} sub-categories with products — browse two rows from each, then explore.
           </p>
         </div>
 
@@ -82,7 +82,7 @@ export default async function RootCategoryPage({ params }) {
           <CategoryGrid
             items={subs || []}
             pathPrefix={rootPath}
-            emptyLabel="No sub-categories yet."
+            emptyLabel="No sub-categories with products yet."
           />
         </div>
 

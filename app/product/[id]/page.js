@@ -10,7 +10,7 @@ import StorefrontFooter from '@/app/components/StorefrontFooter';
 import {
   fetchProductBySku,
   fetchProductSkuParams,
-  fetchRootCategories,
+  fetchRootsWithProducts,
   fetchActiveConnections,
   fetchProductsForBrand,
   fetchCategoryById,
@@ -37,7 +37,7 @@ export default async function ProductDetailPage({ params }) {
   const { data: product } = await fetchProductBySku(id);
   if (!product) notFound();
 
-  const { data: roots } = await fetchRootCategories();
+  const { data: roots } = await fetchRootsWithProducts();
   const { data: connections } = await fetchActiveConnections();
   const contactList = connections || [];
   const images = getProductImages(product);
@@ -78,18 +78,45 @@ export default async function ProductDetailPage({ params }) {
     rootCat && subCat
       ? `${rootPath}/${categorySlugFromName(subCat.name)}`
       : null;
+  const brandPath =
+    subPath && brandCat
+      ? `${subPath}/${categorySlugFromName(brandCat.name)}`
+      : null;
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-600 flex flex-col">
       <StorefrontHeader roots={roots || []} demo={demo} />
 
       <main className={`${STOREFRONT_CONTAINER} py-8 sm:py-10 space-y-12 sm:space-y-16 flex-1`}>
-        <Link
-          href="/"
-          className="inline-flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors"
-        >
-          <ArrowLeft className="w-4 h-4" /> Back to catalog
-        </Link>
+        <div className="flex flex-wrap items-center gap-3 text-sm">
+          <Link href="/" className="inline-flex items-center gap-2 font-medium text-zinc-400 hover:text-white transition-colors">
+            <ArrowLeft className="w-4 h-4" /> Home
+          </Link>
+          {rootCat && rootPath && (
+            <>
+              <span className="text-zinc-700">/</span>
+              <Link href={rootPath} className="font-medium text-zinc-400 hover:text-white transition-colors">
+                {rootCat.name}
+              </Link>
+            </>
+          )}
+          {subCat && subPath && (
+            <>
+              <span className="text-zinc-700">/</span>
+              <Link href={subPath} className="font-medium text-zinc-400 hover:text-white transition-colors">
+                {subCat.name}
+              </Link>
+            </>
+          )}
+          {brandCat && brandPath && (
+            <>
+              <span className="text-zinc-700">/</span>
+              <Link href={brandPath} className="font-medium text-zinc-400 hover:text-white transition-colors">
+                {brandCat.name}
+              </Link>
+            </>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
           <ProductGallery images={images} title={product.title} />

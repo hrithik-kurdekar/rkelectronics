@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import StorefrontHeader from '@/app/components/StorefrontHeader';
 import StorefrontFooter from '@/app/components/StorefrontFooter';
-import { fetchRootCategories, isDemoMode } from '@/lib/data';
+import { fetchRootsWithProducts, isDemoMode } from '@/lib/data';
 import { STOREFRONT_CONTAINER } from '@/lib/storefront-layout';
 
 export const metadata = {
@@ -12,7 +12,7 @@ export const metadata = {
 export const revalidate = 3600;
 
 export default async function AboutPage() {
-  const { data: roots } = await fetchRootCategories();
+  const { data: roots } = await fetchRootsWithProducts();
   const demo = isDemoMode();
 
   return (

@@ -5,7 +5,7 @@ import StorefrontHero from '@/app/components/StorefrontHero';
 import CategoryGrid from '@/app/components/CategoryGrid';
 import LazyCategorySections from '@/app/components/LazyCategorySections';
 import StorefrontFooter from '@/app/components/StorefrontFooter';
-import { fetchRootCategories, fetchBrowseSections, isDemoMode } from '@/lib/data';
+import { fetchRootsWithProducts, fetchBrowseSections, isDemoMode } from '@/lib/data';
 import { STOREFRONT_SECTION_BATCH } from '@/lib/fair-product-pick';
 import { STOREFRONT_CONTAINER } from '@/lib/storefront-layout';
 
@@ -13,7 +13,7 @@ export const revalidate = 3600;
 export const dynamic = 'force-static';
 
 async function fetchStorefrontPayload() {
-  const { data: roots, error: rootsError } = await fetchRootCategories();
+  const { data: roots, error: rootsError } = await fetchRootsWithProducts();
   const {
     sections,
     hasMore,
