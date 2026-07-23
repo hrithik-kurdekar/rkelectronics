@@ -1389,57 +1389,69 @@ export default function InventoryPage() {
 
       {/* --- Global Overlay Configuration Modals Template Framework --- */}
       {isModalOpen && (
-        <form onSubmit={handleSaveForm} className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-center justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-xl w-full max-w-md p-4 shadow-2xl relative flex flex-col max-h-[90vh]">
+        <form
+          onSubmit={handleSaveForm}
+          className="fixed inset-0 bg-black/85 backdrop-blur-md flex items-end sm:items-center justify-center p-3 sm:p-4 z-50 animate-fade-in overflow-y-auto"
+        >
+          <div
+            className={`bg-zinc-900 border border-zinc-800 rounded-xl w-full shadow-2xl relative flex flex-col my-auto transition-[max-width,padding] duration-300 ease-out ${
+              modalType === 'product'
+                ? 'max-w-[min(42rem,calc(100vw-1.5rem))] lg:max-w-[min(56rem,calc(100vw-3rem))] max-h-[min(92vh,calc(100dvh-1.5rem))] p-4 lg:p-6'
+                : 'max-w-md max-h-[min(85vh,calc(100dvh-1.5rem))] p-4 sm:p-5'
+            }`}
+          >
             
-            <div className="flex items-center justify-between border-b border-zinc-800 pb-2 mb-2.5 flex-shrink-0">
-              <h3 className="text-xs font-bold tracking-tight text-white capitalize">{isEditMode ? 'Modify' : 'Create New'} {modalType} Template</h3>
-              <button type="button" onClick={() => { clearModalPhotoPreviews(); setPendingStorageRemovals([]); setIsModalOpen(false); }} className="p-1 text-zinc-500 hover:text-zinc-200 rounded-lg"><X className="w-4 h-4" /></button>
+            <div className="flex items-center justify-between border-b border-zinc-800 pb-3 mb-3 flex-shrink-0">
+              <h3 className="text-sm font-bold tracking-tight text-white capitalize">{isEditMode ? 'Modify' : 'Create New'} {modalType} Template</h3>
+              <button type="button" onClick={() => { clearModalPhotoPreviews(); setPendingStorageRemovals([]); setIsModalOpen(false); }} className="p-1.5 text-zinc-500 hover:text-zinc-200 rounded-lg"><X className="w-4 h-4" /></button>
             </div>
             
-            <div className="space-y-3 flex-1 overflow-y-auto pr-0.5 min-h-0">
+            <div
+              className={`${
+                modalType === 'product' ? 'space-y-4 flex-1 overflow-y-auto min-h-0 -mr-1 pr-1' : 'space-y-4 overflow-y-auto min-h-0'
+              }`}
+            >
               
               {/* Hierarchical Tree Blueprint Mappings Engine for Products */}
               {modalType === 'product' && (
-                <div className="p-2.5 bg-zinc-950 border border-zinc-800/80 rounded-xl text-[10px] space-y-2">
-                  <span className="font-extrabold tracking-wider uppercase block text-zinc-500 text-[8px]">Categorical Node Allocation Matrix</span>
-                  
-                  <div className="grid grid-cols-3 gap-2">
+                <div className="p-3 sm:p-4 bg-zinc-950 border border-zinc-800/80 rounded-xl">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-2">Category</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
-                      <label className="text-[8px] font-bold uppercase tracking-wider text-zinc-400 block mb-0.5">Root</label>
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">Root</label>
                       <select 
                         required
                         value={formData.root_category_id || ''} 
                         onChange={(e) => handleModalRootChange(e.target.value)}
-                        className="w-full bg-zinc-900 border border-zinc-800 rounded px-1.5 py-1 text-[11px] text-zinc-200 focus:outline-none focus:border-zinc-700"
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-700"
                       >
-                        <option value="">Select Root...</option>
+                        <option value="">Select root...</option>
                         {roots.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                       </select>
                     </div>
 
                     <div>
-                      <label className="text-[8px] font-bold uppercase tracking-wider text-zinc-400 block mb-0.5">Sub</label>
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">Sub</label>
                       <select 
                         required
                         value={formData.sub_category_id || ''} 
                         onChange={(e) => handleModalSubChange(e.target.value)}
-                        className="w-full bg-zinc-900 border border-zinc-800 rounded px-1.5 py-1 text-[11px] text-zinc-200 focus:outline-none focus:border-zinc-700"
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-700"
                       >
-                        <option value="">Select Sub...</option>
+                        <option value="">Select sub...</option>
                         {modalSubsList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
                       </select>
                     </div>
 
                     <div>
-                      <label className="text-[8px] font-bold uppercase tracking-wider text-zinc-400 block mb-0.5">Brand</label>
+                      <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1">Brand</label>
                       <select 
                         required
                         value={formData.brand_id || ''} 
                         onChange={(e) => setFormData({ ...formData, brand_id: e.target.value })}
-                        className="w-full bg-zinc-900 border border-zinc-800 rounded px-1.5 py-1 text-[11px] text-zinc-200 focus:outline-none focus:border-zinc-700"
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-lg px-2.5 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-700"
                       >
-                        <option value="">Select Brand...</option>
+                        <option value="">Select brand...</option>
                         {modalBrandsList.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
                       </select>
                     </div>
@@ -1449,15 +1461,15 @@ export default function InventoryPage() {
 
               {/* Editable Root Matrix Selection for Sub-Categories */}
               {modalType === 'sub' && (
-                <div className="p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-[10px] space-y-2">
-                  <label className="text-[8px] font-bold uppercase tracking-wider text-zinc-400 block mb-0.5">Root Anchor Assignment</label>
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5">Root anchor</label>
                   <select 
                     required
                     value={modalRootId || ''} 
                     onChange={(e) => handleModalRootChange(e.target.value)}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-[11px] text-zinc-200 focus:outline-none focus:border-zinc-700"
+                    className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-700"
                   >
-                    <option value="">Select Root Node...</option>
+                    <option value="">Select root...</option>
                     {roots.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
                   </select>
                 </div>
@@ -1465,163 +1477,187 @@ export default function InventoryPage() {
 
               {/* Linked Blueprint Mappings Engine for Brands */}
               {modalType === 'brand' && (
-                <div className="p-2.5 bg-zinc-950 border border-zinc-800 rounded-lg text-[10px] space-y-2">
-                  <span className="font-extrabold tracking-wider uppercase block text-zinc-500 text-[8px]">Linked Category Node Framework</span>
-                  
-                  <div className="grid grid-cols-2 gap-2">
-                    <div>
-                      <label className="text-[8px] font-bold uppercase tracking-wider text-zinc-400 block mb-0.5">Root Anchor</label>
-                      <select 
-                        value={modalRootId} 
-                        onChange={(e) => handleModalRootChange(e.target.value)}
-                        className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-[11px] text-zinc-200 focus:outline-none focus:border-zinc-700"
-                      >
-                        <option value="">Select Root Node...</option>
-                        {roots.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="text-[8px] font-bold uppercase tracking-wider text-zinc-400 block mb-0.5">Sub Category Base</label>
-                      <select 
-                        value={formData.parent_id || ''} 
-                        onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
-                        className="w-full bg-zinc-900 border border-zinc-800 rounded px-2 py-1 text-[11px] text-zinc-200 focus:outline-none focus:border-zinc-700"
-                      >
-                        <option value="">Select Sub Node...</option>
-                        {modalSubsList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                      </select>
-                    </div>
+                <>
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5">Root anchor</label>
+                    <select 
+                      value={modalRootId} 
+                      onChange={(e) => handleModalRootChange(e.target.value)}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-700"
+                    >
+                      <option value="">Select root...</option>
+                      {roots.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                    </select>
                   </div>
-                </div>
+
+                  <div>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5">Sub category</label>
+                    <select 
+                      value={formData.parent_id || ''} 
+                      onChange={(e) => setFormData({ ...formData, parent_id: e.target.value })}
+                      className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-2.5 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-700"
+                    >
+                      <option value="">Select sub...</option>
+                      {modalSubsList.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                  </div>
+                </>
               )}
 
-              <div>
-                <label className="text-[9px] font-extrabold tracking-wider uppercase text-zinc-400 block mb-1">
-                  {modalType === 'product' ? 'Product Name/Title' : `${modalType} Matrix Label`}
-                </label>
-                <input required type="text" value={formData.name} onChange={(e) => setFormData({...formData, name: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800/80 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 placeholder-zinc-700" placeholder="Insert configuration metric title..."/>
-              </div>
-
               {modalType !== 'product' && (
-                <div className="space-y-1.5">
-                  <label className="text-[9px] font-extrabold tracking-wider uppercase text-zinc-400 block">
-                    Category photo
-                    <span className="ml-1 font-normal normal-case tracking-normal text-zinc-600">
-                      optional · {MEDIA_LIMITS.imageMaxEdge}px WebP
-                    </span>
-                  </label>
-                  <div className="flex items-center gap-3">
-                    {formData.categoryImage ? (
-                      <div className="relative w-16 h-16 rounded-lg border border-zinc-800 overflow-hidden bg-zinc-950 flex-shrink-0">
-                        <img src={formData.categoryImage.preview} alt="" className="w-full h-full object-cover" />
-                        <button
-                          type="button"
-                          onClick={removeCategoryImage}
-                          className="absolute top-0.5 right-0.5 bg-black/70 hover:bg-red-600 text-white p-0.5 rounded transition"
-                          aria-label="Remove category photo"
-                        >
-                          <X className="w-2.5 h-2.5" />
-                        </button>
-                      </div>
-                    ) : (
-                      <label className="cursor-pointer w-16 h-16 border border-dashed border-zinc-800 hover:border-zinc-600 rounded-lg flex flex-col items-center justify-center bg-zinc-950/40 text-zinc-500 hover:text-zinc-300 transition flex-shrink-0">
-                        <ImagePlus className="w-4 h-4 mb-0.5" />
-                        <span className="text-[8px] font-bold uppercase tracking-wider">Add</span>
-                        <input type="file" accept="image/*" className="hidden" onChange={handleCategoryImageUpload} />
-                      </label>
-                    )}
-                    {formData.categoryImage && (
-                      <label className="cursor-pointer text-[11px] font-semibold text-blue-400 hover:text-blue-300">
-                        Replace
-                        <input type="file" accept="image/*" className="hidden" onChange={handleCategoryImageUpload} />
-                      </label>
-                    )}
+                <>
+                  <div>
+                    <label className="text-[10px] font-extrabold tracking-wider uppercase text-zinc-400 block mb-1.5">
+                      {modalType} label
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      value={formData.name}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                      className="w-full bg-zinc-950 border border-zinc-800/80 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-700 placeholder-zinc-700"
+                      placeholder={`Enter ${modalType} name...`}
+                    />
                   </div>
+
+                  <div>
+                    <label className="text-[10px] font-extrabold tracking-wider uppercase text-zinc-400 block mb-1.5">
+                      Category photo
+                      <span className="ml-1.5 font-normal normal-case tracking-normal text-zinc-600">
+                        optional · {MEDIA_LIMITS.imageMaxEdge}px WebP
+                      </span>
+                    </label>
+                    <div className="flex items-center gap-3">
+                      {formData.categoryImage ? (
+                        <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-xl border border-zinc-800 overflow-hidden bg-zinc-950 flex-shrink-0">
+                          <img src={formData.categoryImage.preview} alt="" className="w-full h-full object-cover" />
+                          <button
+                            type="button"
+                            onClick={removeCategoryImage}
+                            className="absolute top-1 right-1 bg-black/70 hover:bg-red-600 text-white p-0.5 rounded transition"
+                            aria-label="Remove category photo"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <label className="cursor-pointer w-20 h-20 sm:w-24 sm:h-24 border border-dashed border-zinc-800 hover:border-zinc-600 rounded-xl flex flex-col items-center justify-center bg-zinc-950/40 text-zinc-500 hover:text-zinc-300 transition flex-shrink-0">
+                          <ImagePlus className="w-5 h-5 mb-1" />
+                          <span className="text-[9px] font-bold uppercase tracking-wider">Add photo</span>
+                          <input type="file" accept="image/*" className="hidden" onChange={handleCategoryImageUpload} />
+                        </label>
+                      )}
+                      {formData.categoryImage && (
+                        <label className="cursor-pointer text-sm font-semibold text-blue-400 hover:text-blue-300">
+                          Replace
+                          <input type="file" accept="image/*" className="hidden" onChange={handleCategoryImageUpload} />
+                        </label>
+                      )}
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {modalType === 'product' && (
+                <div>
+                  <label className="text-[10px] font-extrabold tracking-wider uppercase text-zinc-400 block mb-1.5">
+                    Product name
+                  </label>
+                  <input
+                    required
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full bg-zinc-950 border border-zinc-800/80 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-700 placeholder-zinc-700"
+                    placeholder="Product title..."
+                  />
                 </div>
               )}
 
               {modalType === 'product' && (
                 <>
-                  <div className="grid grid-cols-2 gap-2.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] gap-3 sm:gap-4">
                     <div>
-                      <label className="text-[9px] font-extrabold tracking-wider uppercase text-zinc-400 block mb-1">Storefront Value (INR)</label>
-                      <input required type="number" step="0.01" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800/80 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 font-mono" />
+                      <label className="text-[10px] font-extrabold tracking-wider uppercase text-zinc-400 block mb-1.5">Price (INR)</label>
+                      <input required type="number" step="0.01" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800/80 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-700 font-mono" />
                     </div>
                     <div>
-                      <label className="text-[9px] font-extrabold tracking-wider uppercase text-zinc-400 block mb-1">Item State Condition</label>
-                      <select value={formData.condition} onChange={(e) => setFormData({...formData, condition: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800/80 rounded-lg px-2 py-1.5 text-xs text-zinc-300 focus:outline-none focus:border-zinc-700">
+                      <label className="text-[10px] font-extrabold tracking-wider uppercase text-zinc-400 block mb-1.5">Condition</label>
+                      <select value={formData.condition} onChange={(e) => setFormData({...formData, condition: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800/80 rounded-lg px-3 py-2 text-sm text-zinc-300 focus:outline-none focus:border-zinc-700">
                         <option value="New">New</option>
                         <option value="Refurbished">Refurbished</option>
                         <option value="Used">Used / Pre-Owned</option>
                       </select>
                     </div>
+                    <div className="flex items-end pb-0.5 sm:col-span-2 lg:col-span-1 lg:justify-end">
+                      <div className="flex items-center gap-2 h-[42px]">
+                        <input type="checkbox" id="featured_checkbox" checked={formData.is_featured} onChange={(e) => setFormData({...formData, is_featured: e.target.checked})} className="rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0 w-4 h-4" />
+                        <label htmlFor="featured_checkbox" className="text-sm font-semibold text-zinc-300 cursor-pointer select-none whitespace-nowrap">Pin as featured</label>
+                      </div>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="text-[9px] font-extrabold tracking-wider uppercase text-zinc-400 block mb-1">
-                      Product Description
-                      <span className="ml-1 font-mono text-zinc-600 normal-case tracking-normal">
-                        ({(formData.description || '').length}/{MEDIA_LIMITS.descriptionMaxLength})
-                      </span>
-                    </label>
-                    <textarea
-                      rows={2}
-                      maxLength={MEDIA_LIMITS.descriptionMaxLength}
-                      value={formData.description}
-                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                      className="w-full bg-zinc-950 border border-zinc-800/80 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 resize-none placeholder-zinc-700"
-                      placeholder="Provide product feature entry context logs..."
-                    />
-                  </div>
-
-                  {formData.condition !== 'New' && (
-                    <div>
-                      <label className="text-[9px] font-extrabold tracking-wider uppercase text-amber-400 block mb-1">
-                        Defect Logs
-                        <span className="ml-1 font-mono text-amber-700/80 normal-case tracking-normal">
-                          ({(formData.defect_notes || '').length}/{MEDIA_LIMITS.defectNotesMaxLength})
+                  <div className={`grid gap-3 sm:gap-4 ${formData.condition !== 'New' ? 'grid-cols-1 lg:grid-cols-2' : 'grid-cols-1'}`}>
+                    <div className="flex flex-col">
+                      <label className="text-[10px] font-extrabold tracking-wider uppercase text-zinc-400 block mb-1.5">
+                        Description
+                        <span className="ml-1.5 font-mono text-zinc-600 normal-case tracking-normal">
+                          ({(formData.description || '').length}/{MEDIA_LIMITS.descriptionMaxLength})
                         </span>
                       </label>
                       <textarea
-                        rows={2}
-                        required
-                        maxLength={MEDIA_LIMITS.defectNotesMaxLength}
-                        value={formData.defect_notes}
-                        onChange={(e) => setFormData({ ...formData, defect_notes: e.target.value })}
-                        className="w-full bg-zinc-950 border border-amber-900/30 rounded-lg px-2.5 py-1.5 text-xs text-zinc-200 focus:outline-none focus:border-amber-700 resize-none placeholder-amber-950/50"
-                        placeholder="State structural or physical breakdown defects..."
+                        rows={5}
+                        maxLength={MEDIA_LIMITS.descriptionMaxLength}
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        className={`w-full flex-1 bg-zinc-950 border border-zinc-800/80 rounded-lg px-3 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-zinc-700 resize-y placeholder-zinc-700 min-h-[8rem] ${
+                          formData.condition === 'New' ? 'lg:min-h-[12rem]' : 'lg:min-h-[10rem]'
+                        }`}
+                        placeholder="Features, specs, highlights..."
                       />
                     </div>
-                  )}
 
-                  <div className="flex items-center gap-2 pt-0.5">
-                    <input type="checkbox" id="featured_checkbox" checked={formData.is_featured} onChange={(e) => setFormData({...formData, is_featured: e.target.checked})} className="rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0 w-3.5 h-3.5" />
-                    <label htmlFor="featured_checkbox" className="text-xs font-semibold text-zinc-300 cursor-pointer select-none">Pin as Featured Template</label>
+                    {formData.condition !== 'New' && (
+                      <div className="flex flex-col">
+                        <label className="text-[10px] font-extrabold tracking-wider uppercase text-amber-400 block mb-1.5">
+                          Defect notes
+                          <span className="ml-1.5 font-mono text-amber-700/80 normal-case tracking-normal">
+                            ({(formData.defect_notes || '').length}/{MEDIA_LIMITS.defectNotesMaxLength})
+                          </span>
+                        </label>
+                        <textarea
+                          rows={5}
+                          required
+                          maxLength={MEDIA_LIMITS.defectNotesMaxLength}
+                          value={formData.defect_notes}
+                          onChange={(e) => setFormData({ ...formData, defect_notes: e.target.value })}
+                          className="w-full flex-1 bg-zinc-950 border border-amber-900/30 rounded-lg px-3 py-2.5 text-sm text-zinc-200 focus:outline-none focus:border-amber-700 resize-y min-h-[8rem] lg:min-h-[10rem] placeholder-amber-950/50"
+                          placeholder="Known issues or wear..."
+                        />
+                      </div>
+                    )}
                   </div>
-                  
-                  <div className="space-y-1.5">
-                    <div className="border-b border-zinc-800 pb-1">
-                      <label className="text-[9px] font-extrabold tracking-wider uppercase text-zinc-400 block">
-                        Product images ({formData.photos.length}/{MEDIA_LIMITS.productMaxImages})
-                        <span className="ml-1 font-normal normal-case tracking-normal text-zinc-600">
-                          {MEDIA_LIMITS.imageMaxEdge}px WebP @ {MEDIA_LIMITS.imageWebpQuality}
-                        </span>
-                      </label>
-                    </div>
+
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-extrabold tracking-wider uppercase text-zinc-400 block">
+                      Product images ({formData.photos.length}/{MEDIA_LIMITS.productMaxImages})
+                      <span className="ml-1.5 font-normal normal-case tracking-normal text-zinc-600">
+                        {MEDIA_LIMITS.imageMaxEdge}px WebP
+                      </span>
+                    </label>
                     
-                    <div className="grid grid-cols-5 gap-2">
+                    <div className="flex flex-wrap gap-3">
                       {formData.photos.map((photo, index) => (
-                        <div key={index} className="relative aspect-square border border-zinc-800/80 rounded-lg bg-zinc-950 overflow-hidden group">
+                        <div key={index} className="relative size-24 lg:size-28 border border-zinc-800/80 rounded-xl bg-zinc-950 overflow-hidden group flex-shrink-0">
                           <img src={photo.preview} alt="" className="w-full h-full object-cover" />
-                          <button type="button" onClick={() => removePhotoSlot(index)} className="absolute top-0.5 right-0.5 bg-black/70 hover:bg-red-600 text-white p-0.5 rounded transition opacity-0 group-hover:opacity-100"><X className="w-2.5 h-2.5" /></button>
+                          <button type="button" onClick={() => removePhotoSlot(index)} className="absolute top-1 right-1 bg-black/70 hover:bg-red-600 text-white p-1 rounded transition sm:opacity-0 sm:group-hover:opacity-100"><X className="w-3 h-3" /></button>
                         </div>
                       ))}
 
                       {formData.photos.length < MEDIA_LIMITS.productMaxImages && (
-                        <label className="cursor-pointer aspect-square border border-dashed border-zinc-800 hover:border-zinc-600 rounded-lg flex flex-col items-center justify-center bg-zinc-950/40 text-zinc-500 hover:text-zinc-300 transition">
-                          <ImagePlus className="w-4 h-4 mb-0.5" />
-                          <span className="text-[8px] font-bold uppercase tracking-wider">Upload</span>
+                        <label className="cursor-pointer size-24 lg:size-28 border border-dashed border-zinc-800 hover:border-zinc-600 rounded-xl flex flex-col items-center justify-center bg-zinc-950/40 text-zinc-500 hover:text-zinc-300 transition flex-shrink-0">
+                          <ImagePlus className="w-5 h-5 mb-1" />
+                          <span className="text-[9px] font-bold uppercase tracking-wider">Upload</span>
                           <input type="file" accept="image/*" multiple className="hidden" onChange={handleMultipleImagesUpload} />
                         </label>
                       )}
@@ -1631,9 +1667,9 @@ export default function InventoryPage() {
               )}
             </div>
 
-            <div className="flex justify-end gap-2 mt-4 pt-2.5 border-t border-zinc-800 flex-shrink-0">
-              <button type="button" onClick={() => { clearModalPhotoPreviews(); setPendingStorageRemovals([]); setIsModalOpen(false); }} className="px-3 py-1.5 text-xs font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg transition">Dismiss</button>
-              <button type="submit" disabled={loading} className="px-3 py-1.5 text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition disabled:opacity-50">
+            <div className="flex flex-col-reverse sm:flex-row sm:justify-end gap-2 sm:gap-3 mt-4 pt-3 border-t border-zinc-800 flex-shrink-0">
+              <button type="button" onClick={() => { clearModalPhotoPreviews(); setPendingStorageRemovals([]); setIsModalOpen(false); }} className="w-full sm:w-auto px-4 py-2.5 sm:py-2 text-sm font-semibold bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg transition">Dismiss</button>
+              <button type="submit" disabled={loading} className="w-full sm:w-auto px-4 py-2.5 sm:py-2 text-sm font-semibold bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition disabled:opacity-50">
                 {loading ? 'Processing...' : 'Save Layout'}
               </button>
             </div>
