@@ -21,7 +21,7 @@ import {
   STOREFRONT_SECTION_BATCH,
   pickProductsForBrand,
 } from '@/lib/fair-product-pick';
-import { iconForConnectionType, hrefForConnection } from '@/lib/connections';
+import ProductContactSection from '@/app/components/ProductContactSection';
 import { STOREFRONT_CONTAINER } from '@/lib/storefront-layout';
 import { categorySlugFromName } from '@/lib/category-slug';
 
@@ -87,7 +87,9 @@ export default async function ProductDetailPage({ params }) {
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-600 flex flex-col">
       <StorefrontHeader roots={roots || []} demo={demo} />
 
-      <main className={`${STOREFRONT_CONTAINER} py-8 sm:py-10 space-y-12 sm:space-y-16 flex-1`}>
+      <main className={`${STOREFRONT_CONTAINER} py-6 sm:py-8 flex-1`}>
+        <div className="space-y-12 sm:space-y-16">
+        <div className="space-y-4 sm:space-y-5">
         <div className="flex flex-wrap items-center gap-3 text-sm">
           <Link href="/" className="inline-flex items-center gap-2 font-medium text-zinc-400 hover:text-white transition-colors">
             <ArrowLeft className="w-4 h-4" /> Home
@@ -118,10 +120,12 @@ export default async function ProductDetailPage({ params }) {
           )}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-          <ProductGallery images={images} title={product.title} />
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 lg:gap-10 items-start">
+          <div className="lg:col-span-2">
+            <ProductGallery images={images} title={product.title} />
+          </div>
 
-          <div className="space-y-6 lg:pt-1">
+          <div className="lg:col-span-3 space-y-6 lg:pt-1">
             <div className="flex flex-wrap gap-2">
               <span className="font-mono text-xs font-bold text-blue-400 px-3 py-1 bg-blue-500/5 border border-blue-500/10 rounded-full tracking-wider">
                 {product.sku_code}
@@ -142,7 +146,7 @@ export default async function ProductDetailPage({ params }) {
 
             <div className="border-t border-zinc-800 pt-5 space-y-2">
               <h2 className="text-xs font-bold tracking-wider uppercase text-zinc-500">Description</h2>
-              <p className="text-sm text-zinc-300 leading-relaxed">
+              <p className="text-sm sm:text-base text-zinc-300 leading-relaxed whitespace-pre-line">
                 {product.description || 'No description available for this product.'}
               </p>
             </div>
@@ -160,56 +164,9 @@ export default async function ProductDetailPage({ params }) {
             )}
           </div>
         </div>
+        </div>
 
-        <section className="space-y-5 border-t border-zinc-900 pt-10">
-          <div className="space-y-1">
-            <h2 className="text-xl font-bold tracking-tight text-white">Contact</h2>
-            <p className="text-sm text-zinc-500">
-              Reach RK Electronics through the channels configured in Platform Connections.
-            </p>
-          </div>
-
-          {contactList.length === 0 ? (
-            <p className="text-sm text-zinc-500 py-8 text-center border border-dashed border-zinc-800 rounded-2xl">
-              Contact details will appear here when configured.
-            </p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-              {contactList.map((connection) => {
-                const Icon = iconForConnectionType(connection.type);
-                const href = hrefForConnection(connection);
-                const display = (connection.value || '').replace(/^(mailto:|tel:)/, '');
-
-                return (
-                  <div
-                    key={connection.id}
-                    className="p-4 rounded-2xl bg-zinc-900/40 border border-zinc-800/80 space-y-2"
-                  >
-                    <div className="flex items-center gap-2 text-zinc-500">
-                      <Icon className="w-4 h-4" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider">
-                        {connection.type}
-                      </span>
-                    </div>
-                    <p className="text-xs text-zinc-500">{connection.label}</p>
-                    {href ? (
-                      <a
-                        href={href}
-                        target={href.startsWith('http') ? '_blank' : undefined}
-                        rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                        className="text-sm font-semibold text-blue-400 hover:text-blue-300 break-all transition"
-                      >
-                        {display}
-                      </a>
-                    ) : (
-                      <span className="text-sm text-zinc-300">{display}</span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
+        <ProductContactSection connections={contactList} product={product} />
 
         {sameBrandProducts.length > 0 && (
           <section className="space-y-5 border-t border-zinc-900 pt-10">
@@ -254,6 +211,7 @@ export default async function ProductDetailPage({ params }) {
             )}
           </section>
         ) : null}
+        </div>
       </main>
 
       <StorefrontFooter />

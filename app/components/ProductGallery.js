@@ -4,6 +4,31 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import { ImageIcon } from 'lucide-react';
 
+const MAIN_FRAME =
+  'relative aspect-square w-full bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-800';
+
+function GalleryImage({ src, alt, className, sizes, priority = false }) {
+  const isLocal = src.startsWith('/');
+
+  if (isLocal) {
+    return (
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        priority={priority}
+        className={className}
+        sizes={sizes}
+      />
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src={src} alt={alt} className={className} />
+  );
+}
+
 export default function ProductGallery({ images = [], title = 'Product' }) {
   const list = (images || []).filter(Boolean);
   const [active, setActive] = useState(0);
@@ -11,60 +36,55 @@ export default function ProductGallery({ images = [], title = 'Product' }) {
 
   if (!current) {
     return (
-      <div className="aspect-square w-full bg-zinc-950 rounded-2xl border border-zinc-800 flex flex-col items-center justify-center text-zinc-600 gap-2">
-        <ImageIcon className="w-10 h-10 opacity-50" />
-        <span className="text-[10px] font-medium uppercase tracking-wider">No image</span>
+      <div className="w-full space-y-3">
+        <div className={`${MAIN_FRAME} flex flex-col items-center justify-center text-zinc-600 gap-2`}>
+          <ImageIcon className="w-10 h-10 opacity-50" />
+          <span className="text-[10px] font-medium uppercase tracking-wider">No image</span>
+        </div>
       </div>
     );
   }
 
-  const isLocal = current.startsWith('/');
-
   return (
-    <div className="space-y-3">
-      <div className="relative aspect-square w-full bg-zinc-950 rounded-2xl overflow-hidden border border-zinc-800">
-        {isLocal ? (
-          <Image
-            src={current}
-            alt={title}
-            fill
-            priority
-            className="object-cover"
-            sizes="(max-width: 1024px) 100vw, 50vw"
-          />
-        ) : (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={current} alt={title} className="absolute inset-0 w-full h-full object-cover" />
-        )}
+    <div className="w-full space-y-3">
+      <div className={MAIN_FRAME}>
+        <GalleryImage
+          src={current}
+          alt={title}
+          priority
+          sizes="(max-width: 1024px) 100vw, 40vw"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
       </div>
 
-      {list.length > 1 && (
-        <div className="grid grid-cols-4 sm:grid-cols-5 gap-2 sm:gap-3">
-          {list.map((url, i) => {
-            const thumbLocal = url.startsWith('/');
-            return (
-              <button
-                key={`${url}-${i}`}
-                type="button"
-                onClick={() => setActive(i)}
-                className={`relative aspect-square rounded-xl overflow-hidden border bg-zinc-950 transition ${
-                  i === active
-                    ? 'border-blue-500/60 ring-1 ring-blue-500/30'
-                    : 'border-zinc-800 opacity-70 hover:opacity-100'
-                }`}
-                aria-label={`View image ${i + 1}`}
-              >
-                {thumbLocal ? (
-                  <Image src={url} alt="" fill className="object-cover" sizes="80px" />
-                ) : (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={url} alt="" className="absolute inset-0 w-full h-full object-cover" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      )}
+      <div
+        className="flex justify-center gap-2 sm:gap-2.5 overflow-x-auto pb-0.5"
+        role="tablist"
+        aria-label="Product images"
+      >
+        {list.map((url, i) => (
+          <button
+            key={`${url}-${i}`}
+            type="button"
+            role="tab"
+            aria-selected={i === active}
+            onClick={() => setActive(i)}
+            className={`relative flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 rounded-xl overflow-hidden border bg-zinc-950 transition ${
+              i === active
+                ? 'border-blue-500/70 ring-1 ring-blue-500/40'
+                : 'border-zinc-800 opacity-75 hover:opacity-100'
+            }`}
+            aria-label={`View image ${i + 1} of ${list.length}`}
+          >
+            <GalleryImage
+              src={url}
+              alt=""
+              sizes="64px"
+              className="absolute inset-0 w-full h-full object-cover"
+            />
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
