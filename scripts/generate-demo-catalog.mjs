@@ -568,6 +568,30 @@ const connections = [
     is_active: true,
     created_at: now,
   },
+  {
+    id: 'c1000001-0000-4000-8000-000000000004',
+    label: 'Instagram — new arrivals',
+    type: 'Social Channel',
+    value: 'https://instagram.com/rkelectronics',
+    is_active: true,
+    created_at: now,
+  },
+  {
+    id: 'c1000001-0000-4000-8000-000000000005',
+    label: 'YouTube',
+    type: 'Social Channel',
+    value: 'https://youtube.com/@rkelectronics',
+    is_active: true,
+    created_at: now,
+  },
+  {
+    id: 'c1000001-0000-4000-8000-000000000006',
+    label: 'WhatsApp Channel',
+    type: 'Social Channel',
+    value: 'https://whatsapp.com/channel/rkelectronics',
+    is_active: true,
+    created_at: now,
+  },
 ];
 
 const rootCount = categories.filter((c) => c.type === 'root').length;

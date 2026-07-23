@@ -11,7 +11,7 @@ import {
   fetchProductBySku,
   fetchProductSkuParams,
   fetchRootsWithProducts,
-  fetchActiveConnections,
+  fetchContactConnections,
   fetchProductsForBrand,
   fetchCategoryById,
   fetchBrowseSections,
@@ -38,7 +38,7 @@ export default async function ProductDetailPage({ params }) {
   if (!product) notFound();
 
   const { data: roots } = await fetchRootsWithProducts();
-  const { data: connections } = await fetchActiveConnections();
+  const { data: connections } = await fetchContactConnections();
   const contactList = connections || [];
   const images = getProductImages(product);
   const demo = isDemoMode();
