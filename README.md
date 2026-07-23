@@ -15,6 +15,8 @@ Catalog storefront for refurbished electronics. Shoppers inquire via WhatsApp; a
 3. In Supabase SQL Editor, run migrations in order:
    - `supabase/migrations/001_schema.sql` (skip if tables already exist)
    - `supabase/migrations/002_rls.sql`
+   - `supabase/migrations/003_category_image.sql` (if using category images)
+   - `supabase/migrations/004_dashboard_analytics.sql` (traffic + keep-alive history)
 4. Create a **public** storage bucket named `product-media`
 5. Create an admin user and set role:
 
@@ -60,6 +62,18 @@ Storefront and admin **reads** go through `lib/data.js`. In demo mode, catalog e
 3. Restart `npm run dev`
 
 Set back to `false` for real production data.
+
+## Admin dashboard & Supabase keep-alive
+
+The admin dashboard (`/admin/dashboard`) shows catalog stats, traffic, Supabase health, storage, and keep-alive status. Missing setup shows **fallback messages** instead of errors.
+
+**Production checklist:**
+
+1. Run migration `004_dashboard_analytics.sql`
+2. Set `CRON_SECRET` in Vercel/host env (Vercel Cron sends `Authorization: Bearer CRON_SECRET` daily to `/api/cron/keep-alive`)
+3. Ensure `SUPABASE_SERVICE_ROLE_KEY` is set for traffic history, storage counts, and heartbeat logging
+
+Manual keep-alive test: `GET /api/cron/keep-alive?secret=YOUR_CRON_SECRET`
 
 ## Scripts
 
