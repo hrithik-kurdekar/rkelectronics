@@ -29,6 +29,7 @@ import {
   Rss,
 } from 'lucide-react';
 import ErrorBanner from '@/app/components/ErrorBanner';
+import { ADMIN_CONTAINER } from '@/lib/storefront-layout';
 
 const CONNECTION_GROUPS = [
   {
@@ -310,9 +311,154 @@ export default function ConnectionsPage() {
 
   const modalCategory = ALL_CATEGORIES.find((c) => c.type === formData.type);
 
+  const contactCount = connections.filter((c) => CONTACT_CONNECTION_TYPES.includes(c.type)).length;
+  const socialCount = connections.filter((c) => SOCIAL_CONNECTION_TYPES.includes(c.type)).length;
+  const stackGroups = contactCount > 3 || socialCount > 3;
+
+  function renderConnectionGroup(group, compactLayout) {
+    const GroupIcon = group.icon;
+    const groupTypes = group.categories.map((c) => c.type);
+    const groupCount = connections.filter((c) => groupTypes.includes(c.type)).length;
+
+    return (
+      <div
+        key={group.id}
+        className={`rounded-2xl border p-4 sm:p-5 space-y-5 min-w-0 ${group.accent}`}
+      >
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <GroupIcon className="w-5 h-5 text-zinc-300 flex-shrink-0" />
+            <h3 className="text-base font-bold text-white">{group.title}</h3>
+            <span
+              className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${group.badgeClass}`}
+            >
+              {group.subtitle}
+            </span>
+            <span className="text-[10px] bg-zinc-900 border border-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-md">
+              {groupCount}
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">{group.description}</p>
+          <p className="text-[11px] text-zinc-500">
+            Storefront: <span className="text-zinc-400">{group.storefrontHint}</span>
+          </p>
+        </div>
+
+        {group.categories.map((cat) => {
+          const catItems = connections.filter((item) => item.type === cat.type);
+
+          return (
+            <div key={cat.type} className="space-y-3">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800/80 pb-2">
+                <div className="space-y-0.5 min-w-0">
+                  <h4 className="text-sm font-bold text-zinc-200 flex items-center gap-2">
+                    {getIconForType(cat.type)} {cat.title}
+                    <span className="text-[10px] bg-zinc-900 border border-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-md">
+                      {catItems.length}
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-zinc-500">{cat.description}</p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => openAddModal(cat.type, null, group)}
+                  className="h-8 px-3 text-[11px] font-bold bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1.5 flex-shrink-0"
+                >
+                  <Plus className="w-3.5 h-3.5" /> Add
+                </button>
+              </div>
+
+              {cat.presets?.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {cat.presets.map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => openAddModal(cat.type, preset, group)}
+                      className="text-[10px] font-semibold px-2.5 py-1 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-white hover:border-zinc-600 transition"
+                    >
+                      + {preset.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {catItems.length === 0 ? (
+                <div className="py-5 flex items-center justify-center border border-dashed border-zinc-800 rounded-xl bg-zinc-950/40 text-xs text-zinc-600 gap-1.5">
+                  <Inbox className="w-4 h-4 text-zinc-700" /> None added yet.
+                </div>
+              ) : (
+                <div
+                  className={`grid gap-3 ${
+                    compactLayout ? 'grid-cols-1' : 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3'
+                  }`}
+                >
+                  {catItems.map((item) => (
+                    <div
+                      key={item.id}
+                      className={`bg-zinc-900 border rounded-xl p-4 flex flex-col justify-between transition-all ${
+                        item.is_active
+                          ? 'border-zinc-800/80 hover:border-zinc-700'
+                          : 'border-zinc-900 opacity-50'
+                      }`}
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <h5 className="text-xs font-bold text-zinc-300 truncate pr-1 flex-1">
+                            {item.label}
+                          </h5>
+                          <div className="flex items-center gap-2 flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => toggleConnectionStatus(item)}
+                              className={`text-[9px] font-bold px-1.5 py-0.5 rounded border transition ${
+                                item.is_active
+                                  ? 'bg-emerald-950/20 border-emerald-500/20 text-emerald-400'
+                                  : 'bg-zinc-950 border-zinc-800 text-zinc-500'
+                              }`}
+                            >
+                              {item.is_active ? 'Active' : 'Hidden'}
+                            </button>
+                            <button
+                              onClick={() => openEditModal(item)}
+                              title="Edit"
+                              className="p-1 text-zinc-500 hover:text-blue-400 rounded transition"
+                            >
+                              <Edit3 className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteConnection(item.id)}
+                              title="Delete"
+                              className="p-1 text-zinc-500 hover:text-red-400 rounded transition"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                        <div className="bg-zinc-950 border border-zinc-900/60 px-2.5 py-1.5 rounded-lg">
+                          <p
+                            className="text-xs font-mono text-zinc-400 truncate select-all"
+                            title={item.value}
+                          >
+                            {item.value}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 min-h-0 w-full overflow-y-auto">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-10 py-6 md:py-8 space-y-8 select-none">
+      <div className={`${ADMIN_CONTAINER} py-6 md:py-8 lg:py-10 space-y-8 select-none`}>
       <ErrorBanner message={loadError} onDismiss={() => setLoadError(null)} />
 
       <div className="border-b border-zinc-800 pb-4 space-y-2">
@@ -327,141 +473,8 @@ export default function ConnectionsPage() {
         </p>
       </div>
 
-      <div className="space-y-12 pb-12">
-        {CONNECTION_GROUPS.map((group) => {
-          const GroupIcon = group.icon;
-          const groupTypes = group.categories.map((c) => c.type);
-          const groupCount = connections.filter((c) => groupTypes.includes(c.type)).length;
-
-          return (
-            <div key={group.id} className={`rounded-2xl border p-5 sm:p-6 space-y-6 ${group.accent}`}>
-              <div className="space-y-3">
-                <div className="flex flex-wrap items-start justify-between gap-4">
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <GroupIcon className="w-5 h-5 text-zinc-300" />
-                      <h3 className="text-base font-bold text-white">{group.title}</h3>
-                      <span
-                        className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${group.badgeClass}`}
-                      >
-                        {group.subtitle}
-                      </span>
-                      <span className="text-[10px] bg-zinc-900 border border-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-md">
-                        {groupCount}
-                      </span>
-                    </div>
-                    <p className="text-xs sm:text-sm text-zinc-400 max-w-3xl leading-relaxed">{group.description}</p>
-                    <p className="text-[11px] text-zinc-500">
-                      Storefront: <span className="text-zinc-400">{group.storefrontHint}</span>
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              {group.categories.map((cat) => {
-                const catItems = connections.filter((item) => item.type === cat.type);
-
-                return (
-                  <div key={cat.type} className="space-y-4">
-                    <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800/80 pb-2">
-                      <div className="space-y-0.5">
-                        <h4 className="text-sm font-bold text-zinc-200 flex items-center gap-2">
-                          {getIconForType(cat.type)} {cat.title}
-                          <span className="text-[10px] bg-zinc-900 border border-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-md">
-                            {catItems.length}
-                          </span>
-                        </h4>
-                        <p className="text-[11px] text-zinc-500">{cat.description}</p>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => openAddModal(cat.type, null, group)}
-                        className="h-8 px-3 text-[11px] font-bold bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1.5"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Add
-                      </button>
-                    </div>
-
-                    {cat.presets?.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {cat.presets.map((preset) => (
-                          <button
-                            key={preset.label}
-                            type="button"
-                            onClick={() => openAddModal(cat.type, preset, group)}
-                            className="text-[10px] font-semibold px-2.5 py-1 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-white hover:border-zinc-600 transition"
-                          >
-                            + {preset.label}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {catItems.length === 0 ? (
-                      <div className="py-6 flex items-center justify-center border border-dashed border-zinc-800 rounded-xl bg-zinc-950/40 text-xs text-zinc-600 gap-1.5">
-                        <Inbox className="w-4 h-4 text-zinc-700" /> None added yet.
-                      </div>
-                    ) : (
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {catItems.map((item) => (
-                          <div
-                            key={item.id}
-                            className={`bg-zinc-900 border rounded-xl p-4 flex flex-col justify-between transition-all ${
-                              item.is_active
-                                ? 'border-zinc-800/80 hover:border-zinc-700'
-                                : 'border-zinc-900 opacity-50'
-                            }`}
-                          >
-                            <div className="space-y-3">
-                              <div className="flex items-center justify-between gap-2">
-                                <h5 className="text-xs font-bold text-zinc-300 truncate pr-1 flex-1">
-                                  {item.label}
-                                </h5>
-                                <div className="flex items-center gap-2 flex-shrink-0">
-                                  <button
-                                    type="button"
-                                    onClick={() => toggleConnectionStatus(item)}
-                                    className={`text-[9px] font-bold px-1.5 py-0.5 rounded border transition ${
-                                      item.is_active
-                                        ? 'bg-emerald-950/20 border-emerald-500/20 text-emerald-400'
-                                        : 'bg-zinc-950 border-zinc-800 text-zinc-500'
-                                    }`}
-                                  >
-                                    {item.is_active ? 'Active' : 'Hidden'}
-                                  </button>
-                                  <button
-                                    onClick={() => openEditModal(item)}
-                                    title="Edit"
-                                    className="p-1 text-zinc-500 hover:text-blue-400 rounded transition"
-                                  >
-                                    <Edit3 className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteConnection(item.id)}
-                                    title="Delete"
-                                    className="p-1 text-zinc-500 hover:text-red-400 rounded transition"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
-                              </div>
-                              <div className="bg-zinc-950 border border-zinc-900/60 px-2.5 py-1.5 rounded-lg">
-                                <p className="text-xs font-mono text-zinc-400 truncate select-all" title={item.value}>
-                                  {item.value}
-                                </p>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          );
-        })}
+      <div className={`grid gap-4 pb-8 ${stackGroups ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-2'}`}>
+        {CONNECTION_GROUPS.map((group) => renderConnectionGroup(group, !stackGroups))}
       </div>
 
       {isModalOpen && (

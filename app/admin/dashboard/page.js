@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import ErrorBanner from '@/app/components/ErrorBanner';
+import { ADMIN_CONTAINER } from '@/lib/storefront-layout';
 import {
   Activity,
   AlertCircle,
@@ -59,9 +60,11 @@ function formatRelativeTime(iso) {
   return `${days}d ago`;
 }
 
-function MetricCard({ title, value, icon: Icon, color }) {
+function MetricCard({ title, value, icon: Icon, color, className = '' }) {
   return (
-    <div className={`p-4 rounded-xl border ${color} flex items-center justify-between shadow-sm`}>
+    <div
+      className={`p-3.5 sm:p-4 rounded-xl border ${color} flex items-center justify-between shadow-sm ${className}`}
+    >
       <div className="space-y-1.5 min-w-0">
         <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block truncate">
           {title}
@@ -75,9 +78,11 @@ function MetricCard({ title, value, icon: Icon, color }) {
   );
 }
 
-function Panel({ title, description, icon: Icon, iconClass, children }) {
+function Panel({ title, description, icon: Icon, iconClass, children, className = '' }) {
   return (
-    <div className="bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 space-y-4">
+    <div
+      className={`bg-zinc-900/60 border border-zinc-800 rounded-xl p-4 space-y-3 h-full ${className}`}
+    >
       <div className="space-y-1">
         <h3 className="text-xs font-extrabold uppercase tracking-wider text-zinc-300 flex items-center gap-1.5">
           <Icon className={`w-3.5 h-3.5 ${iconClass}`} /> {title}
@@ -151,15 +156,16 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto p-1 select-none">
+    <div className="flex-1 min-h-0 overflow-y-auto">
+      <div className={`${ADMIN_CONTAINER} py-5 md:py-6 space-y-4 select-none`}>
       <ErrorBanner message={error} onDismiss={() => setError(null)} />
 
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-800 pb-5">
-        <div>
-          <h1 className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 border-b border-zinc-800/80 pb-4">
+        <div className="space-y-1">
+          <h1 className="text-xl lg:text-2xl font-bold tracking-tight text-white flex items-center gap-2">
             <Activity className="w-5 h-5 text-purple-500" /> Store dashboard
           </h1>
-          <p className="text-zinc-500 text-xs mt-0.5">
+          <p className="text-zinc-500 text-xs sm:text-sm max-w-2xl">
             Catalog, traffic, Supabase health, and keep-alive status.
             {metrics?.demoMode && ' Running in demo mode — live metrics are limited.'}
           </p>
@@ -168,7 +174,7 @@ export default function AdminDashboard() {
           type="button"
           onClick={pullMetrics}
           disabled={refreshing}
-          className="h-8 px-3 text-xs bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 rounded-xl transition flex items-center gap-1.5 self-start sm:self-auto disabled:opacity-40"
+          className="h-9 px-4 text-xs bg-zinc-900 border border-zinc-800 hover:border-zinc-600 text-zinc-300 rounded-lg transition flex items-center gap-1.5 self-start sm:self-auto disabled:opacity-40"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} /> Refresh
         </button>
@@ -186,46 +192,52 @@ export default function AdminDashboard() {
       )}
 
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(4)].map((_, i) => (
-            <div key={i} className="h-24 bg-zinc-900/60 border border-zinc-800/60 rounded-xl animate-pulse" />
+        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-12 gap-3">
+          {[...Array(7)].map((_, i) => (
+            <div
+              key={i}
+              className={`h-[5.25rem] bg-zinc-900/60 border border-zinc-800/60 rounded-xl animate-pulse ${i < 4 ? 'xl:col-span-3' : 'xl:col-span-4'}`}
+            />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-12 gap-3">
           {cardConfig.map((card) => (
-            <MetricCard key={card.title} {...card} />
+            <MetricCard key={card.title} {...card} className="xl:col-span-3" />
           ))}
+          <MetricCard
+            title="Featured"
+            value={metrics?.featured ?? 0}
+            icon={Zap}
+            color="text-violet-500 bg-violet-500/5 border-violet-500/10"
+            className="xl:col-span-4"
+          />
+          <MetricCard
+            title="Categories"
+            value={
+              metrics
+                ? metrics.categories.roots + metrics.categories.subs + metrics.categories.brands
+                : 0
+            }
+            icon={Users}
+            color="text-cyan-500 bg-cyan-500/5 border-cyan-500/10"
+            className="xl:col-span-4"
+          />
+          <MetricCard
+            title="Connections"
+            value={metrics?.connections.total ?? 0}
+            icon={Link2}
+            color="text-pink-500 bg-pink-500/5 border-pink-500/10"
+            className="xl:col-span-4"
+          />
         </div>
       )}
 
       {!loading && metrics && (
         <>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <MetricCard
-              title="Featured products"
-              value={metrics.featured}
-              icon={Zap}
-              color="text-violet-500 bg-violet-500/5 border-violet-500/10"
-            />
-            <MetricCard
-              title="Categories"
-              value={
-                metrics.categories.roots + metrics.categories.subs + metrics.categories.brands
-              }
-              icon={Users}
-              color="text-cyan-500 bg-cyan-500/5 border-cyan-500/10"
-            />
-            <MetricCard
-              title="Active connections"
-              value={metrics.connections.total}
-              icon={Link2}
-              color="text-pink-500 bg-pink-500/5 border-pink-500/10"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <div className="grid grid-cols-1 xl:grid-cols-12 gap-3">
             <Panel
+              className="xl:col-span-6"
               title="Supabase"
               description="Database connectivity from the app server."
               icon={Database}
@@ -257,6 +269,7 @@ export default function AdminDashboard() {
             </Panel>
 
             <Panel
+              className="xl:col-span-6"
               title="Keep-alive"
               description="Prevents Supabase free-tier pause after 7 days idle. Runs daily via Vercel cron."
               icon={Server}
@@ -279,8 +292,9 @@ export default function AdminDashboard() {
             </Panel>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-12 gap-3">
             <Panel
+              className="xl:col-span-4"
               title="Storefront traffic"
               description="Page views recorded from public routes."
               icon={TrendingUp}
@@ -321,6 +335,7 @@ export default function AdminDashboard() {
             </Panel>
 
             <Panel
+              className="xl:col-span-4"
               title="Connections"
               description="Contact vs social channels configured in settings."
               icon={BarChart3}
@@ -363,6 +378,7 @@ export default function AdminDashboard() {
             </Panel>
 
             <Panel
+              className="md:col-span-2 xl:col-span-4"
               title="Storage"
               description="Product media bucket object count (requires service role)."
               icon={HardDrive}
@@ -388,11 +404,12 @@ export default function AdminDashboard() {
             </Panel>
           </div>
 
-          <p className="text-[10px] text-zinc-600 text-right font-mono">
+          <p className="text-[10px] text-zinc-600 text-right font-mono pb-2">
             Updated {formatRelativeTime(metrics.generatedAt)}
           </p>
         </>
       )}
+      </div>
     </div>
   );
 }
