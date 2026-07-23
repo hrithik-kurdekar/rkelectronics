@@ -81,6 +81,7 @@ export default function LazyCategorySections({
           category={section.category}
           products={section.products}
           exploreHref={exploreHref(section.category)}
+          browseLevel={level}
         />
       ))}
 

@@ -3,39 +3,64 @@ import { AlertCircle } from 'lucide-react';
 import StorefrontHeader from '@/app/components/StorefrontHeader';
 import StorefrontHero from '@/app/components/StorefrontHero';
 import CategoryGrid from '@/app/components/CategoryGrid';
+import ProductCollectionSection from '@/app/components/ProductCollectionSection';
 import LazyCategorySections from '@/app/components/LazyCategorySections';
 import StorefrontFooter from '@/app/components/StorefrontFooter';
-import { fetchRootsWithProducts, fetchBrowseSections, isDemoMode } from '@/lib/data';
-import { STOREFRONT_SECTION_BATCH } from '@/lib/fair-product-pick';
+import { fetchRootsWithProducts, fetchBrowseSections, fetchProductCollection, isDemoMode } from '@/lib/data';
+import { productCollectionMeta } from '@/lib/product-collections';
+import { STOREFRONT_SECTION_BATCH, STOREFRONT_SECTION_PRODUCT_LIMIT } from '@/lib/fair-product-pick';
 import { STOREFRONT_CONTAINER } from '@/lib/storefront-layout';
 
 export const revalidate = 3600;
 export const dynamic = 'force-static';
 
 async function fetchStorefrontPayload() {
-  const { data: roots, error: rootsError } = await fetchRootsWithProducts();
-  const {
-    sections,
-    hasMore,
-    error: sectionsError,
-  } = await fetchBrowseSections({
-    level: 'home',
-    offset: 0,
-    limit: STOREFRONT_SECTION_BATCH,
-  });
+  const [
+    { data: roots, error: rootsError },
+    browseResult,
+    newArrivalsResult,
+    featuredResult,
+  ] = await Promise.all([
+    fetchRootsWithProducts(),
+    fetchBrowseSections({
+      level: 'home',
+      offset: 0,
+      limit: STOREFRONT_SECTION_BATCH,
+    }),
+    fetchProductCollection({
+      kind: 'new-arrivals',
+      offset: 0,
+      limit: STOREFRONT_SECTION_PRODUCT_LIMIT,
+    }),
+    fetchProductCollection({
+      kind: 'featured',
+      offset: 0,
+      limit: STOREFRONT_SECTION_PRODUCT_LIMIT,
+    }),
+  ]);
 
-  const error = rootsError?.message || sectionsError?.message || null;
+  const error =
+    rootsError?.message ||
+    browseResult.error?.message ||
+    newArrivalsResult.error?.message ||
+    featuredResult.error?.message ||
+    null;
+
   return {
     roots: roots || [],
-    sections: sections || [],
-    hasMore: Boolean(hasMore),
+    sections: browseResult.sections || [],
+    hasMore: Boolean(browseResult.hasMore),
+    newArrivals: newArrivalsResult.products || [],
+    featured: featuredResult.products || [],
     error,
   };
 }
 
 export default async function RKStorefrontHome() {
-  const { roots, sections, hasMore, error } = await fetchStorefrontPayload();
+  const { roots, sections, hasMore, newArrivals, featured, error } = await fetchStorefrontPayload();
   const demo = isDemoMode();
+  const newArrivalsMeta = productCollectionMeta('new-arrivals');
+  const featuredMeta = productCollectionMeta('featured');
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-600 flex flex-col">
@@ -69,6 +94,27 @@ export default async function RKStorefrontHome() {
           <CategoryGrid roots={roots} />
         </div>
       </section>
+
+      {(newArrivals.length > 0 || featured.length > 0) && (
+        <section id="highlights" className="scroll-mt-20 border-b border-zinc-900/60 w-full">
+          <div className={`${STOREFRONT_CONTAINER} py-12 sm:py-16 space-y-10 sm:space-y-12`}>
+            <ProductCollectionSection
+              title={newArrivalsMeta.title}
+              description={newArrivalsMeta.description}
+              products={newArrivals}
+              exploreHref={newArrivals.length > 0 ? newArrivalsMeta.homeExploreHref : null}
+              exploreMessage={newArrivalsMeta.exploreMessage}
+            />
+            <ProductCollectionSection
+              title={featuredMeta.title}
+              description={featuredMeta.description}
+              products={featured}
+              exploreHref={featured.length > 0 ? featuredMeta.homeExploreHref : null}
+              exploreMessage={featuredMeta.exploreMessage}
+            />
+          </div>
+        </section>
+      )}
 
       <section id="products" className="scroll-mt-20 w-full">
         <div className={`${STOREFRONT_CONTAINER} py-12 sm:py-16 space-y-8`}>

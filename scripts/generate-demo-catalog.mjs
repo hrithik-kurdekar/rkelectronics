@@ -530,11 +530,18 @@ for (const rootCat of CATALOG_TREE) {
   }
 }
 
-const products = PRODUCT_FIXTURES.map((p) => ({
-  ...p,
-  image_urls: [DEMO_IMAGE],
-  created_at: now,
-}));
+const products = PRODUCT_FIXTURES.map((p, index) => {
+  // Stagger ages: ~half within 30 days (new arrivals), half older for realistic filtering.
+  const daysAgo = index % 2 === 0 ? index % 20 : 35 + (index % 45);
+  const createdAt = new Date(now);
+  createdAt.setDate(createdAt.getDate() - daysAgo);
+
+  return {
+    ...p,
+    image_urls: [DEMO_IMAGE],
+    created_at: createdAt.toISOString(),
+  };
+});
 
 const connections = [
   {
