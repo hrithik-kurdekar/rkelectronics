@@ -5,6 +5,8 @@ import StorefrontProductCard from '@/app/components/StorefrontProductCard';
 import {
   ExploreCard,
   PRODUCT_GRID_CLASS,
+  PRODUCT_GRID_MAX_ROWS,
+  shouldShowExploreCard,
   useProductGridColumns,
   visibleProductCount,
 } from '@/app/components/storefront-product-grid';
@@ -15,9 +17,16 @@ export default function ProductCollectionSection({
   products = [],
   exploreHref,
   exploreMessage,
+  hasMore = false,
 }) {
   const cols = useProductGridColumns();
-  const count = visibleProductCount(products.length, cols, { includeExplore: Boolean(exploreHref) });
+  const showExplore =
+    Boolean(exploreHref) &&
+    shouldShowExploreCard(products.length, cols, { hasMore, maxRows: PRODUCT_GRID_MAX_ROWS });
+  const count = visibleProductCount(products.length, cols, {
+    includeExplore: showExplore,
+    maxRows: PRODUCT_GRID_MAX_ROWS,
+  });
   const visible = products.slice(0, count);
 
   if (visible.length === 0) return null;
@@ -33,7 +42,7 @@ export default function ProductCollectionSection({
         {visible.map((product) => (
           <StorefrontProductCard key={product.id} product={product} />
         ))}
-        {exploreHref && <ExploreCard href={exploreHref} message={exploreMessage} />}
+        {showExplore && <ExploreCard href={exploreHref} message={exploreMessage} />}
       </div>
     </section>
   );

@@ -12,6 +12,23 @@ const COLUMN_BREAKPOINTS = [
 ];
 
 /** Matches Tailwind grid: grid-cols-2 md:3 lg:4 xl:5 2xl:6 */
+export const PRODUCT_GRID_MAX_ROWS = 2;
+
+export function productGridCapacity(cols, maxRows = PRODUCT_GRID_MAX_ROWS) {
+  if (cols <= 0 || maxRows <= 0) return 0;
+  return cols * maxRows;
+}
+
+/** Show Explore when the viewport grid cannot fit all products, or the catalog has more. */
+export function shouldShowExploreCard(
+  productCount,
+  cols,
+  { hasMore = false, maxRows = PRODUCT_GRID_MAX_ROWS } = {}
+) {
+  if (productCount <= 0) return false;
+  return hasMore || productCount > productGridCapacity(cols, maxRows);
+}
+
 export function useProductGridColumns() {
   const [cols, setCols] = useState(2);
 

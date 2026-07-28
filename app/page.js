@@ -51,13 +51,24 @@ async function fetchStorefrontPayload() {
     sections: browseResult.sections || [],
     hasMore: Boolean(browseResult.hasMore),
     newArrivals: newArrivalsResult.products || [],
+    newArrivalsHasMore: Boolean(newArrivalsResult.hasMore),
     featured: featuredResult.products || [],
+    featuredHasMore: Boolean(featuredResult.hasMore),
     error,
   };
 }
 
 export default async function RKStorefrontHome() {
-  const { roots, sections, hasMore, newArrivals, featured, error } = await fetchStorefrontPayload();
+  const {
+    roots,
+    sections,
+    hasMore,
+    newArrivals,
+    newArrivalsHasMore,
+    featured,
+    featuredHasMore,
+    error,
+  } = await fetchStorefrontPayload();
   const demo = isDemoMode();
   const newArrivalsMeta = productCollectionMeta('new-arrivals');
   const featuredMeta = productCollectionMeta('featured');
@@ -104,6 +115,7 @@ export default async function RKStorefrontHome() {
               products={newArrivals}
               exploreHref={newArrivals.length > 0 ? newArrivalsMeta.homeExploreHref : null}
               exploreMessage={newArrivalsMeta.exploreMessage}
+              hasMore={newArrivalsHasMore}
             />
             <ProductCollectionSection
               title={featuredMeta.title}
@@ -111,6 +123,7 @@ export default async function RKStorefrontHome() {
               products={featured}
               exploreHref={featured.length > 0 ? featuredMeta.homeExploreHref : null}
               exploreMessage={featuredMeta.exploreMessage}
+              hasMore={featuredHasMore}
             />
           </div>
         </section>

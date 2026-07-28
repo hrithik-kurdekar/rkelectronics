@@ -5,9 +5,11 @@ import StorefrontProductCard from '@/app/components/StorefrontProductCard';
 import {
   ExploreCard,
   PRODUCT_GRID_CLASS,
+  PRODUCT_GRID_MAX_ROWS,
+  exploreMessageForBrowseLevel,
+  shouldShowExploreCard,
   useProductGridColumns,
   visibleProductCount,
-  exploreMessageForBrowseLevel,
 } from '@/app/components/storefront-product-grid';
 
 export default function CategoryProductSection({
@@ -17,7 +19,13 @@ export default function CategoryProductSection({
   browseLevel = 'home',
 }) {
   const cols = useProductGridColumns();
-  const count = visibleProductCount(products.length, cols, { includeExplore: Boolean(exploreHref) });
+  const showExplore =
+    Boolean(exploreHref) &&
+    shouldShowExploreCard(products.length, cols, { maxRows: PRODUCT_GRID_MAX_ROWS });
+  const count = visibleProductCount(products.length, cols, {
+    includeExplore: showExplore,
+    maxRows: PRODUCT_GRID_MAX_ROWS,
+  });
   const visible = products.slice(0, count);
   const exploreMessage = exploreHref
     ? exploreMessageForBrowseLevel(browseLevel, category?.name)
@@ -33,7 +41,7 @@ export default function CategoryProductSection({
         {visible.map((product) => (
           <StorefrontProductCard key={product.id} product={product} />
         ))}
-        {exploreHref && <ExploreCard href={exploreHref} message={exploreMessage} />}
+        {showExplore && <ExploreCard href={exploreHref} message={exploreMessage} />}
       </div>
     </section>
   );
