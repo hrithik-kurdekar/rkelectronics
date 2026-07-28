@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { Cpu } from 'lucide-react';
 import { fetchContactConnections, fetchSocialConnections } from '@/lib/data';
 import { STOREFRONT_CONTAINER } from '@/lib/storefront-layout';
@@ -24,9 +23,9 @@ export default async function StorefrontFooter() {
   return (
     <footer className="border-t border-zinc-800/80 bg-zinc-900/30 mt-auto">
       <div className={`${STOREFRONT_CONTAINER} py-12 lg:py-14`}>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-x-8 gap-y-10 lg:gap-y-8 items-start">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-x-8 gap-y-10 lg:gap-y-8 items-start">
           {/* Brand */}
-          <div className="sm:col-span-2 lg:col-span-4 space-y-3 lg:pr-4">
+          <div className="space-y-3">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white flex-shrink-0">
                 <Cpu className="w-4 h-4" />
@@ -42,35 +41,8 @@ export default async function StorefrontFooter() {
             <p className="text-[11px] text-zinc-600 pt-1">© {year} RK Electronics. All rights reserved.</p>
           </div>
 
-          {/* Explore */}
-          <div className="lg:col-span-2 space-y-3">
-            <h2 className={FOOTER_HEADING}>Explore</h2>
-            <ul className="space-y-2 text-sm">
-              <li>
-                <Link href="/" className="text-zinc-300 hover:text-white transition">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <a href="/#categories" className="text-zinc-300 hover:text-white transition">
-                  Categories
-                </a>
-              </li>
-              <li>
-                <a href="/#highlights" className="text-zinc-300 hover:text-white transition">
-                  New &amp; featured
-                </a>
-              </li>
-              <li>
-                <Link href="/about" className="text-zinc-300 hover:text-white transition">
-                  About Us
-                </Link>
-              </li>
-            </ul>
-          </div>
-
           {/* Contact seller */}
-          <div className="lg:col-span-3 space-y-3">
+          <div className="space-y-3 w-full min-w-0">
             <div className="space-y-1">
               <h2 className={FOOTER_HEADING}>Contact seller</h2>
               <p className="text-xs text-zinc-600 leading-relaxed">
@@ -80,7 +52,7 @@ export default async function StorefrontFooter() {
             {contactList.length === 0 ? (
               <p className="text-sm text-zinc-500">No contact channels configured yet.</p>
             ) : (
-              <ul className="space-y-2">
+              <ul className="space-y-2 w-full">
                 {contactList.map((connection) => {
                   const Icon = iconForConnectionType(connection.type);
                   const href = hrefForConnection(connection);
@@ -89,7 +61,7 @@ export default async function StorefrontFooter() {
                   return (
                     <li
                       key={connection.id}
-                      className="p-3 rounded-xl bg-zinc-950/50 border border-zinc-800/80"
+                      className="w-full p-3 rounded-xl bg-zinc-950/50 border border-zinc-800/80"
                     >
                       <div className="flex items-center gap-2 text-zinc-500 mb-1">
                         <Icon className="w-3.5 h-3.5 flex-shrink-0" />
@@ -117,7 +89,7 @@ export default async function StorefrontFooter() {
           </div>
 
           {/* Follow for updates */}
-          <div className="sm:col-span-2 lg:col-span-3 space-y-3">
+          <div className="space-y-3 w-full min-w-0">
             {socialList.length > 0 ? (
               <SocialFollowSection connections={socialList} compact />
             ) : (

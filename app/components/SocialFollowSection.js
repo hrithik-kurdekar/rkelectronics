@@ -12,7 +12,7 @@ export default function SocialFollowSection({ connections = [], compact = false 
 
   if (compact) {
     return (
-      <div className="space-y-3 h-full">
+      <div className="space-y-3 h-full w-full min-w-0">
         <div className="space-y-1">
           <h2 className="text-[11px] font-bold uppercase tracking-wider text-zinc-500">
             Follow for updates
@@ -21,7 +21,7 @@ export default function SocialFollowSection({ connections = [], compact = false 
             New listings posted on these channels.
           </p>
         </div>
-        <ul className="flex flex-col gap-2">
+        <ul className="flex flex-col gap-2 w-full">
           {list.map((connection) => {
             const Icon = iconForSocialConnection(connection);
             const href = hrefForConnection(connection);
@@ -32,7 +32,7 @@ export default function SocialFollowSection({ connections = [], compact = false 
               return (
                 <li
                   key={connection.id}
-                  className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-zinc-950/50 border border-zinc-800/80 text-xs text-zinc-500"
+                  className="flex w-full items-center gap-2 px-3 py-2.5 rounded-xl bg-zinc-950/50 border border-zinc-800/80 text-xs text-zinc-500"
                 >
                   <Icon className="w-3.5 h-3.5 flex-shrink-0" />
                   <span className="truncate">{label}</span>
@@ -41,12 +41,12 @@ export default function SocialFollowSection({ connections = [], compact = false 
             }
 
             return (
-              <li key={connection.id}>
+              <li key={connection.id} className="w-full">
                 <a
                   href={href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex items-center gap-2.5 px-3 py-2.5 rounded-xl bg-zinc-950/50 border border-zinc-800/80 hover:border-zinc-600 hover:bg-zinc-900/80 transition"
+                  className="group flex w-full items-center gap-2.5 px-3 py-2.5 rounded-xl bg-zinc-950/50 border border-zinc-800/80 hover:border-zinc-600 hover:bg-zinc-900/80 transition"
                 >
                   <Icon className="w-3.5 h-3.5 flex-shrink-0 text-zinc-500 group-hover:text-blue-400 transition" />
                   <span className="text-xs font-semibold text-zinc-300 group-hover:text-white truncate flex-1 min-w-0">
