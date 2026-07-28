@@ -554,22 +554,6 @@ const connections = [
     created_at: now,
   },
   {
-    id: 'c1000001-0000-4000-8000-000000000002',
-    label: 'Phone inquiries',
-    type: 'Phone',
-    value: 'tel:+919876543210',
-    is_active: true,
-    created_at: now,
-  },
-  {
-    id: 'c1000001-0000-4000-8000-000000000003',
-    label: 'Email',
-    type: 'Email',
-    value: 'mailto:sales@rkelectronics.in',
-    is_active: true,
-    created_at: now,
-  },
-  {
     id: 'c1000001-0000-4000-8000-000000000004',
     label: 'Instagram — new arrivals',
     type: 'Social Channel',

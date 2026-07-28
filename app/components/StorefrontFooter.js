@@ -3,8 +3,8 @@ import { fetchContactConnections, fetchSocialConnections } from '@/lib/data';
 import { STOREFRONT_CONTAINER } from '@/lib/storefront-layout';
 import {
   iconForConnectionType,
-  hrefForConnection,
-  displayValueForConnection,
+  hrefForInquiryConnection,
+  actionLabelForConnection,
 } from '@/lib/connections';
 import SocialFollowSection from '@/app/components/SocialFollowSection';
 
@@ -55,8 +55,8 @@ export default async function StorefrontFooter() {
               <ul className="space-y-2 w-full">
                 {contactList.map((connection) => {
                   const Icon = iconForConnectionType(connection.type);
-                  const href = hrefForConnection(connection);
-                  const display = displayValueForConnection(connection);
+                  const href = hrefForInquiryConnection(connection);
+                  const action = actionLabelForConnection(connection);
 
                   return (
                     <li
@@ -72,14 +72,12 @@ export default async function StorefrontFooter() {
                       {href ? (
                         <a
                           href={href}
-                          target={href.startsWith('http') ? '_blank' : undefined}
-                          rel={href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                          className="text-sm font-medium text-blue-400 hover:text-blue-300 break-all transition"
+                          className="text-sm font-medium text-blue-400 hover:text-blue-300 transition"
                         >
-                          {display}
+                          {action} →
                         </a>
                       ) : (
-                        <span className="text-sm text-zinc-300 break-all">{display}</span>
+                        <span className="text-sm text-zinc-500">Not configured</span>
                       )}
                     </li>
                   );

@@ -2,7 +2,6 @@ import { ArrowUpRight } from 'lucide-react';
 import {
   iconForConnectionType,
   hrefForProductInquiry,
-  displayValueForConnection,
   actionLabelForConnection,
   hintForConnection,
   accentForConnection,
@@ -32,11 +31,9 @@ export default function ProductContactSection({ connections = [], product }) {
           {list.map((connection) => {
             const Icon = iconForConnectionType(connection.type);
             const href = hrefForProductInquiry(connection, product);
-            const display = displayValueForConnection(connection);
             const action = actionLabelForConnection(connection);
             const hint = hintForConnection(connection);
             const accent = accentForConnection(connection);
-            const opensNewTab = href?.startsWith('http');
 
             const cardClass = `group flex flex-col h-full p-5 rounded-2xl bg-zinc-900/50 border transition-all duration-200 ${accent.border} ${
               href
@@ -64,10 +61,7 @@ export default function ProductContactSection({ connections = [], product }) {
                   <p className="text-xs text-zinc-500 leading-relaxed">{hint}</p>
                 </div>
 
-                <div className="mt-4 pt-4 border-t border-zinc-800/80 space-y-1">
-                  {display && (
-                    <p className="text-sm font-semibold text-zinc-200 break-all">{display}</p>
-                  )}
+                <div className="mt-4 pt-4 border-t border-zinc-800/80">
                   {href ? (
                     <p className={`text-xs font-bold uppercase tracking-wider ${accent.cta}`}>
                       {action} →
@@ -84,8 +78,6 @@ export default function ProductContactSection({ connections = [], product }) {
                 <a
                   key={connection.id}
                   href={href}
-                  target={opensNewTab ? '_blank' : undefined}
-                  rel={opensNewTab ? 'noopener noreferrer' : undefined}
                   className={cardClass}
                 >
                   {inner}

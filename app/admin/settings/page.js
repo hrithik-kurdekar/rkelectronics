@@ -13,14 +13,13 @@ import {
   CONTACT_CONNECTION_TYPES,
   SOCIAL_CONNECTION_TYPES,
 } from '@/lib/connection-types';
+import { maskConnectionValueForAdmin } from '@/lib/inquiry-chat';
 import {
   Link2,
   Plus,
   Edit3,
   Trash2,
   X,
-  Mail,
-  Phone,
   MessageSquare,
   Globe,
   Inbox,
@@ -37,26 +36,14 @@ const CONNECTION_GROUPS = [
     title: 'Contact seller',
     subtitle: 'Product inquiries',
     description:
-      'One-to-one channels for shoppers asking about a specific product — price, condition, or availability.',
-    storefrontHint: 'Shown on product detail pages',
+      'Private 1:1 chat for product inquiries — shown on product pages and footer contact.\nAdd WhatsApp (wa.me), Telegram, Instagram DM, or Messenger links.',
     icon: ShoppingBag,
     accent: 'border-blue-500/20 bg-blue-500/5',
     badgeClass: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
     categories: [
       {
-        type: 'Phone',
-        title: 'Phone numbers',
-        description: 'Direct call lines for sales support.',
-      },
-      {
-        type: 'Email',
-        title: 'Email addresses',
-        description: 'Inboxes for product and billing questions.',
-      },
-      {
         type: 'Chat Link',
         title: 'Direct chat links',
-        description: 'Private WhatsApp/Telegram for 1:1 sales — not broadcast groups.',
       },
     ],
   },
@@ -65,8 +52,7 @@ const CONNECTION_GROUPS = [
     title: 'Follow for updates',
     subtitle: 'New listings',
     description:
-      'Public social channels where you post new inventory. Followers get alerts — not for private product chat.',
-    storefrontHint: 'Shown in the site footer',
+      'Public channels for new listing alerts — shown in the site footer.\nAdd Instagram, Facebook, YouTube, WhatsApp Channel, or Telegram links.',
     icon: Rss,
     accent: 'border-violet-500/20 bg-violet-500/5',
     badgeClass: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
@@ -74,20 +60,10 @@ const CONNECTION_GROUPS = [
       {
         type: 'Social Channel',
         title: 'Social & community links',
-        description: 'Instagram, Facebook, YouTube, WhatsApp Channels, Telegram, etc.',
-        presets: [
-          { label: 'Instagram', value: 'https://instagram.com/' },
-          { label: 'Facebook Page', value: 'https://facebook.com/' },
-          { label: 'YouTube', value: 'https://youtube.com/@' },
-          { label: 'WhatsApp Channel', value: 'https://whatsapp.com/channel/' },
-          { label: 'Telegram', value: 'https://t.me/' },
-        ],
       },
     ],
   },
 ];
-
-const ALL_CATEGORIES = CONNECTION_GROUPS.flatMap((g) => g.categories);
 
 export default function ConnectionsPage() {
   const [connections, setConnections] = useState([]);
@@ -99,7 +75,7 @@ export default function ConnectionsPage() {
 
   const [formData, setFormData] = useState({
     label: '',
-    type: 'Phone',
+    type: 'Chat Link',
     value: '',
     is_active: true,
   });
@@ -122,7 +98,7 @@ export default function ConnectionsPage() {
     setConnections(data || []);
   };
 
-  const openAddModal = (targetType, preset = null, group = null) => {
+  const openAddModal = (targetType, group = null) => {
     if (isDemoMode()) {
       alert(DEMO_WRITE_MESSAGE);
       return;
@@ -132,9 +108,9 @@ export default function ConnectionsPage() {
     setValidationError('');
     setModalContext(group);
     setFormData({
-      label: preset?.label || '',
+      label: '',
       type: targetType,
-      value: preset?.value || '',
+      value: '',
       is_active: true,
     });
     setIsModalOpen(true);
@@ -154,15 +130,10 @@ export default function ConnectionsPage() {
         : CONNECTION_GROUPS.find((g) => g.id === 'contact')
     );
 
-    let renderValue = item.value;
-    if (item.type === 'Email' && renderValue.startsWith('mailto:')) {
-      renderValue = renderValue.replace('mailto:', '');
-    }
-
     setFormData({
       label: item.label,
       type: item.type,
-      value: renderValue,
+      value: item.value,
       is_active: item.is_active,
     });
     setIsModalOpen(true);
@@ -188,24 +159,29 @@ export default function ConnectionsPage() {
       return false;
     }
 
-    if (type === 'Phone') {
-      const indianPhoneRegex = /^\+91\s?[6-9]\d{9}$/;
-      if (!indianPhoneRegex.test(value.trim())) {
-        setValidationError('Phone must be Indian format: +91 followed by 10 digits (e.g. +91 9876543210).');
-        return false;
-      }
-    }
-
-    if (type === 'Email') {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value.trim())) {
-        setValidationError('Please enter a valid email address.');
-        return false;
-      }
-    }
-
     if (type === 'Chat Link' || type === 'Social Channel') {
-      if (!value.startsWith('http://') && !value.startsWith('https://')) {
+      const trimmed = value.trim();
+      if (trimmed.startsWith('mailto:') || trimmed.startsWith('tel:')) {
+        setValidationError('Use chat URLs only — not email or phone links.');
+        return false;
+      }
+      if (type === 'Chat Link' && trimmed.toLowerCase().includes('whatsapp.com/channel')) {
+        setValidationError('WhatsApp Channels belong under Follow for updates, not direct chat.');
+        return false;
+      }
+      if (
+        type === 'Chat Link' &&
+        !trimmed.startsWith('http://') &&
+        !trimmed.startsWith('https://')
+      ) {
+        setValidationError('Chat links must start with https://');
+        return false;
+      }
+      if (type === 'Chat Link' && /wa\.me\/\/?$/i.test(trimmed)) {
+        setValidationError('Add your WhatsApp number after wa.me/ (e.g. https://wa.me/919876543210).');
+        return false;
+      }
+      if (type === 'Social Channel' && !trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
         setValidationError('Links must start with https://');
         return false;
       }
@@ -226,14 +202,7 @@ export default function ConnectionsPage() {
     setLoading(true);
 
     try {
-      let finalValue = formData.value.trim();
-
-      if (formData.type === 'Email' && !finalValue.startsWith('mailto:')) {
-        finalValue = `mailto:${finalValue}`;
-      }
-      if (formData.type === 'Phone' && !finalValue.startsWith('tel:')) {
-        finalValue = `tel:${finalValue.replace(/\s/g, '')}`;
-      }
+      const finalValue = formData.value.trim();
 
       const payload = {
         label: formData.label.trim(),
@@ -296,10 +265,6 @@ export default function ConnectionsPage() {
 
   const getIconForType = (type) => {
     switch (type) {
-      case 'Phone':
-        return <Phone className="w-4 h-4 text-emerald-400" />;
-      case 'Email':
-        return <Mail className="w-4 h-4 text-blue-400" />;
       case 'Chat Link':
         return <MessageSquare className="w-4 h-4 text-purple-400" />;
       case 'Social Channel':
@@ -308,8 +273,6 @@ export default function ConnectionsPage() {
         return <Globe className="w-4 h-4 text-zinc-400" />;
     }
   };
-
-  const modalCategory = ALL_CATEGORIES.find((c) => c.type === formData.type);
 
   const contactCount = connections.filter((c) => CONTACT_CONNECTION_TYPES.includes(c.type)).length;
   const socialCount = connections.filter((c) => SOCIAL_CONNECTION_TYPES.includes(c.type)).length;
@@ -338,9 +301,8 @@ export default function ConnectionsPage() {
               {groupCount}
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed">{group.description}</p>
-          <p className="text-[11px] text-zinc-500">
-            Storefront: <span className="text-zinc-400">{group.storefrontHint}</span>
+          <p className="text-xs sm:text-sm text-zinc-400 leading-relaxed whitespace-pre-line">
+            {group.description}
           </p>
         </div>
 
@@ -350,39 +312,23 @@ export default function ConnectionsPage() {
           return (
             <div key={cat.type} className="space-y-3">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-zinc-800/80 pb-2">
-                <div className="space-y-0.5 min-w-0">
+                <div className="min-w-0">
                   <h4 className="text-sm font-bold text-zinc-200 flex items-center gap-2">
                     {getIconForType(cat.type)} {cat.title}
                     <span className="text-[10px] bg-zinc-900 border border-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded-md">
                       {catItems.length}
                     </span>
                   </h4>
-                  <p className="text-[11px] text-zinc-500">{cat.description}</p>
                 </div>
 
                 <button
                   type="button"
-                  onClick={() => openAddModal(cat.type, null, group)}
+                  onClick={() => openAddModal(cat.type, group)}
                   className="h-8 px-3 text-[11px] font-bold bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white rounded-lg transition flex items-center gap-1.5 flex-shrink-0"
                 >
                   <Plus className="w-3.5 h-3.5" /> Add
                 </button>
               </div>
-
-              {cat.presets?.length > 0 && (
-                <div className="flex flex-wrap gap-2">
-                  {cat.presets.map((preset) => (
-                    <button
-                      key={preset.label}
-                      type="button"
-                      onClick={() => openAddModal(cat.type, preset, group)}
-                      className="text-[10px] font-semibold px-2.5 py-1 rounded-lg border border-zinc-800 bg-zinc-950 text-zinc-400 hover:text-white hover:border-zinc-600 transition"
-                    >
-                      + {preset.label}
-                    </button>
-                  ))}
-                </div>
-              )}
 
               {catItems.length === 0 ? (
                 <div className="py-5 flex items-center justify-center border border-dashed border-zinc-800 rounded-xl bg-zinc-950/40 text-xs text-zinc-600 gap-1.5">
@@ -441,7 +387,7 @@ export default function ConnectionsPage() {
                             className="text-xs font-mono text-zinc-400 truncate select-all"
                             title={item.value}
                           >
-                            {item.value}
+                            {maskConnectionValueForAdmin(item.value)}
                           </p>
                         </div>
                       </div>
@@ -461,16 +407,10 @@ export default function ConnectionsPage() {
       <div className={`${ADMIN_CONTAINER} py-6 md:py-8 lg:py-10 space-y-8 select-none`}>
       <ErrorBanner message={loadError} onDismiss={() => setLoadError(null)} />
 
-      <div className="border-b border-zinc-800 pb-4 space-y-2">
+      <div className="border-b border-zinc-800 pb-4">
         <h2 className="text-lg font-bold tracking-tight text-white flex items-center gap-2">
           <Link2 className="w-5 h-5 text-blue-500" /> Platform Connections
         </h2>
-        <p className="text-xs sm:text-sm text-zinc-500 max-w-3xl leading-relaxed">
-          Two separate purposes — don&apos;t mix them up.{' '}
-          <strong className="text-zinc-400">Contact seller</strong> is for shoppers messaging you
-          about a product. <strong className="text-zinc-400">Follow for updates</strong> is for
-          public channels where you announce new listings.
-        </p>
       </div>
 
       <div className={`grid gap-4 pb-8 ${stackGroups ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-2'}`}>
@@ -502,7 +442,7 @@ export default function ConnectionsPage() {
                 className={`mb-4 p-3 rounded-lg border text-[11px] leading-relaxed ${modalContext.accent}`}
               >
                 <p className="font-bold text-zinc-200">{modalContext.title}</p>
-                <p className="text-zinc-500 mt-1">{modalContext.description}</p>
+                <p className="text-zinc-500 mt-1 whitespace-pre-line">{modalContext.description}</p>
               </div>
             )}
 
@@ -525,20 +465,16 @@ export default function ConnectionsPage() {
                   onChange={(e) => setFormData({ ...formData, label: e.target.value })}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 placeholder-zinc-800"
                   placeholder={
-                    formData.type === 'Phone'
-                      ? 'e.g. Sales hotline'
-                      : formData.type === 'Email'
-                        ? 'e.g. Product inquiries'
-                        : formData.type === 'Chat Link'
-                          ? 'e.g. WhatsApp sales'
-                          : 'e.g. Instagram — new arrivals'
+                    formData.type === 'Chat Link'
+                      ? 'e.g. WhatsApp sales'
+                      : 'e.g. Instagram — new arrivals'
                   }
                 />
               </div>
 
               <div>
                 <label className="text-[10px] font-extrabold tracking-wider uppercase text-zinc-500 block mb-1">
-                  {formData.type === 'Phone' ? 'Phone number' : formData.type === 'Email' ? 'Email' : 'Link URL'}
+                  {formData.type === 'Chat Link' ? 'Chat link' : 'Link URL'}
                 </label>
                 <input
                   required
@@ -550,21 +486,23 @@ export default function ConnectionsPage() {
                   }}
                   className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 font-mono placeholder-zinc-800"
                   placeholder={
-                    formData.type === 'Phone'
-                      ? '+91 9876543210'
-                      : formData.type === 'Email'
-                        ? 'sales@rkelectronics.in'
-                        : modalCategory?.presets?.[0]?.value || 'https://'
+                    formData.type === 'Chat Link'
+                      ? 'https://wa.me/919876543210'
+                      : 'https://'
                   }
                 />
                 <span className="text-[9px] text-zinc-500 mt-1.5 block leading-relaxed">
                   {formData.type === 'Chat Link' && (
-                    <>Use a <strong>direct chat</strong> link (wa.me/…) — not a WhatsApp Channel URL.</>
+                    <>
+                      Paste your <strong>WhatsApp chat link</strong> (e.g.{' '}
+                      <code className="text-zinc-400">https://wa.me/919876543210</code>). The number is
+                      stored for admin only — the storefront hides it and opens chat through a secure
+                      redirect. Telegram, Instagram DM, and Messenger direct links are also supported.
+                    </>
                   )}
                   {formData.type === 'Social Channel' && (
                     <>Use your <strong>public profile or channel</strong> where new products are announced.</>
                   )}
-                  {formData.type === 'Phone' && <>Format: +91 followed by 10 digits.</>}
                 </span>
               </div>
 
