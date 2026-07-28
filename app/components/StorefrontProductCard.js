@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { ArrowRight } from 'lucide-react';
 import ProductImage from '@/app/components/ProductImage';
+import ProductPriceDisplay from '@/app/components/ProductPriceDisplay';
 
 export default function StorefrontProductCard({ product }) {
   return (
@@ -25,10 +26,8 @@ export default function StorefrontProductCard({ product }) {
           </span>
           <h4 className="text-sm font-bold text-zinc-200 mt-1 line-clamp-2">{product.title}</h4>
         </div>
-        <div className="pt-2 flex items-center justify-between border-t border-zinc-900 mt-auto gap-2">
-          <span className="text-sm sm:text-base font-extrabold text-white">
-            ₹{parseFloat(product.price).toLocaleString()}
-          </span>
+        <div className="pt-2 flex items-end justify-between border-t border-zinc-900 mt-auto gap-2">
+          <ProductPriceDisplay product={product} size="storefront" />
           <span className="text-xs font-semibold text-blue-400 flex items-center gap-1 flex-shrink-0">
             View <ArrowRight className="w-3.5 h-3.5" />
           </span>

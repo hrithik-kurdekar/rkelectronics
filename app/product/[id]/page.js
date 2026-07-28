@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, ShieldAlert, AlertCircle } from 'lucide-react';
 import { getProductImages } from '@/lib/product-images';
 import ProductGallery from '@/app/components/ProductGallery';
+import ProductPriceDisplay from '@/app/components/ProductPriceDisplay';
 import StorefrontProductCard from '@/app/components/StorefrontProductCard';
 import LazyCategorySections from '@/app/components/LazyCategorySections';
 import StorefrontHeader from '@/app/components/StorefrontHeader';
@@ -139,9 +140,7 @@ export default async function ProductDetailPage({ params }) {
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight">
                 {product.title}
               </h1>
-              <p className="text-3xl font-black text-white">
-                ₹{parseFloat(product.price).toLocaleString()}
-              </p>
+              <ProductPriceDisplay product={product} size="lg" />
             </div>
 
             <div className="border-t border-zinc-800 pt-5 space-y-2">

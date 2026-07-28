@@ -538,6 +538,7 @@ const products = PRODUCT_FIXTURES.map((p, index) => {
 
   return {
     ...p,
+    mrp: p.mrp ?? Math.round(p.price * 1.25),
     image_urls: [DEMO_IMAGE],
     created_at: createdAt.toISOString(),
   };

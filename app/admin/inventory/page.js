@@ -21,6 +21,7 @@ import {
 } from '@/lib/data';
 import { Star, Edit3, Trash2, X, ImagePlus, Inbox, GripVertical, AlertCircle, Search, Filter, Plus } from 'lucide-react';
 import ErrorBanner from '@/app/components/ErrorBanner';
+import ProductPriceDisplay from '@/app/components/ProductPriceDisplay';
 
 const BUCKET_NAME = process.env.NEXT_PUBLIC_SUPABASE_STORAGE_BUCKET || 'product-media';
 const MEDIA_LIMITS = getMediaLimits();
@@ -228,7 +229,8 @@ export default function InventoryPage() {
   // Form Fields mirroring DB Schema cleanly
   const [formData, setFormData] = useState({
     name: '',          
-    price: 0,          
+    price: 0,
+    mrp: '',
     condition: 'New',  
     description: '',   
     defect_notes: '',  
@@ -595,7 +597,7 @@ export default function InventoryPage() {
     if (type === 'brand') defaultParent = selectedSub;
 
     setFormData({
-      name: '', price: 0, condition: 'New', description: '', defect_notes: '', is_featured: false,
+      name: '', price: 0, mrp: '', condition: 'New', description: '', defect_notes: '', is_featured: false,
       photos: [], categoryImage: null, parent_id: defaultParent,
       root_category_id: selectedRoot || '',
       sub_category_id: selectedSub || '',
@@ -630,6 +632,7 @@ export default function InventoryPage() {
       name: item.name || item.title || '',
       description: item.description || '',
       price: item.price || 0,
+      mrp: item.mrp ?? '',
       condition: item.condition || 'New',
       defect_notes: item.defect_notes || '',
       is_featured: item.is_featured || false,
@@ -775,11 +778,21 @@ export default function InventoryPage() {
           ? editingItem.sku_code
           : `SKU-${Math.random().toString(36).substring(2, 10).toUpperCase()}`;
 
+        const salePrice = parseFloat(formData.price) || 0;
+        const mrpValue =
+          formData.mrp !== '' && formData.mrp != null ? parseFloat(formData.mrp) : null;
+        if (mrpValue != null && Number.isFinite(mrpValue) && mrpValue < salePrice) {
+          alert('MRP must be greater than or equal to the selling price.');
+          setLoading(false);
+          return;
+        }
+
         const productPayload = {
           title: formData.name,
           sku_code: generatedSku,
           description: truncateText(formData.description, MEDIA_LIMITS.descriptionMaxLength),
-          price: parseFloat(formData.price) || 0,
+          price: salePrice,
+          mrp: mrpValue != null && Number.isFinite(mrpValue) ? mrpValue : null,
           condition: formData.condition,
           defect_notes:
             formData.condition !== 'New'
@@ -1239,8 +1252,8 @@ export default function InventoryPage() {
                       <h4 className="text-xs font-semibold text-zinc-100 truncate leading-snug flex-1 text-left" title={item.title}>
                         {item.title}
                       </h4>
-                      <span className="text-xs font-bold text-emerald-300 font-mono text-right flex-shrink-0">
-                        ₹{item.price.toLocaleString('en-IN')}
+                      <span className="flex-shrink-0">
+                        <ProductPriceDisplay product={item} size="sm" align="right" />
                       </span>
                     </div>
                   </div>
@@ -1352,10 +1365,12 @@ export default function InventoryPage() {
 
                   {/* Clean Left-Aligned Pricing Metric Segment (Stripped Background Container Rules) */}
                   <div className="space-y-0.5">
-                    <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Price</h4>
-                    <div className="text-base font-mono font-extrabold text-emerald-400">
-                      ₹{viewingProduct.price?.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
-                    </div>
+                    <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-500">Pricing</h4>
+                    <ProductPriceDisplay
+                      product={viewingProduct}
+                      size="md"
+                      priceFractionDigits={2}
+                    />
                   </div>
 
                   {/* Description Layer */}
@@ -1574,10 +1589,17 @@ export default function InventoryPage() {
 
               {modalType === 'product' && (
                 <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_auto] gap-3 sm:gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
                     <div>
                       <label className="text-[10px] font-extrabold tracking-wider uppercase text-zinc-400 block mb-1.5">Price (INR)</label>
-                      <input required type="number" step="0.01" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800/80 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-700 font-mono" />
+                      <input required type="number" step="0.01" min="0" value={formData.price} onChange={(e) => setFormData({...formData, price: e.target.value})} className="w-full bg-zinc-950 border border-zinc-800/80 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-700 font-mono" />
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-extrabold tracking-wider uppercase text-zinc-400 block mb-1.5">
+                        MRP (INR)
+                        <span className="ml-1.5 font-normal normal-case tracking-normal text-zinc-600">optional</span>
+                      </label>
+                      <input type="number" step="0.01" min="0" value={formData.mrp} onChange={(e) => setFormData({ ...formData, mrp: e.target.value })} className="w-full bg-zinc-950 border border-zinc-800/80 rounded-lg px-3 py-2 text-sm text-zinc-200 focus:outline-none focus:border-zinc-700 font-mono" placeholder="List price" />
                     </div>
                     <div>
                       <label className="text-[10px] font-extrabold tracking-wider uppercase text-zinc-400 block mb-1.5">Condition</label>
@@ -1586,12 +1608,6 @@ export default function InventoryPage() {
                         <option value="Refurbished">Refurbished</option>
                         <option value="Used">Used / Pre-Owned</option>
                       </select>
-                    </div>
-                    <div className="flex items-end pb-0.5 sm:col-span-2 lg:col-span-1 lg:justify-end">
-                      <div className="flex items-center gap-2 h-[42px]">
-                        <input type="checkbox" id="featured_checkbox" checked={formData.is_featured} onChange={(e) => setFormData({...formData, is_featured: e.target.checked})} className="rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0 w-4 h-4" />
-                        <label htmlFor="featured_checkbox" className="text-sm font-semibold text-zinc-300 cursor-pointer select-none whitespace-nowrap">Pin as featured</label>
-                      </div>
                     </div>
                   </div>
 
@@ -1659,6 +1675,22 @@ export default function InventoryPage() {
                           <input type="file" accept="image/*" multiple className="hidden" onChange={handleMultipleImagesUpload} />
                         </label>
                       )}
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-1">
+                      <input
+                        type="checkbox"
+                        id="featured_checkbox"
+                        checked={formData.is_featured}
+                        onChange={(e) => setFormData({ ...formData, is_featured: e.target.checked })}
+                        className="rounded bg-zinc-950 border-zinc-800 text-amber-500 focus:ring-0 w-4 h-4"
+                      />
+                      <label
+                        htmlFor="featured_checkbox"
+                        className="text-sm font-semibold text-zinc-300 cursor-pointer select-none whitespace-nowrap"
+                      >
+                        Pin as featured
+                      </label>
                     </div>
                   </div>
                 </>
