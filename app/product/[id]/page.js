@@ -128,9 +128,6 @@ export default async function ProductDetailPage({ params }) {
 
           <div className="lg:col-span-3 space-y-6 lg:pt-1">
             <div className="flex flex-wrap gap-2">
-              <span className="font-mono text-xs font-bold text-blue-400 px-3 py-1 bg-blue-500/5 border border-blue-500/10 rounded-full tracking-wider">
-                {product.sku_code}
-              </span>
               <span className="text-xs font-bold uppercase tracking-wider text-zinc-300 px-3 py-1 bg-zinc-800 rounded-full border border-zinc-700">
                 {product.condition}
               </span>
@@ -140,7 +137,7 @@ export default async function ProductDetailPage({ params }) {
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold tracking-tight text-white leading-tight">
                 {product.title}
               </h1>
-              <ProductPriceDisplay product={product} size="lg" />
+              <ProductPriceDisplay product={product} size="lg" variant="detailed" />
             </div>
 
             <div className="border-t border-zinc-800 pt-5 space-y-2">
