@@ -78,7 +78,7 @@ export default function ProductPriceDisplay({
             </div>
           ) : null}
           <span
-            className={`${styles.price} ${showMrp ? 'w-[60%] text-left pl-2 sm:pl-3' : 'w-full text-left'}`}
+            className={`${styles.price} ${showMrp ? 'w-[60%] text-left pl-1 sm:pl-2 -translate-x-px' : 'w-full text-left'}`}
           >
             {priceText}
           </span>
