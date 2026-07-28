@@ -2,8 +2,6 @@ import { ArrowUpRight } from 'lucide-react';
 import {
   iconForConnectionType,
   hrefForProductInquiry,
-  actionLabelForConnection,
-  hintForConnection,
   accentForConnection,
 } from '@/lib/connections';
 
@@ -27,71 +25,57 @@ export default function ProductContactSection({ connections = [], product }) {
           Contact options will appear here once configured.
         </p>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
           {list.map((connection) => {
             const Icon = iconForConnectionType(connection.type);
             const href = hrefForProductInquiry(connection, product);
-            const action = actionLabelForConnection(connection);
-            const hint = hintForConnection(connection);
             const accent = accentForConnection(connection);
 
-            const cardClass = `group flex flex-col h-full p-5 rounded-2xl bg-zinc-900/50 border transition-all duration-200 ${accent.border} ${
-              href
-                ? 'cursor-pointer hover:bg-zinc-900/80 hover:shadow-lg hover:shadow-black/20 hover:-translate-y-0.5'
-                : 'opacity-80'
+            const rowClass = `group flex items-center gap-3 px-4 py-3.5 rounded-xl bg-zinc-900/50 border transition-all duration-200 h-full w-full min-w-0 ${accent.border} ${
+              href ? 'cursor-pointer hover:bg-zinc-900/80' : 'opacity-80'
             }`;
 
             const inner = (
               <>
-                <div className="flex items-start justify-between gap-3 mb-4">
-                  <div
-                    className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${accent.iconBg}`}
-                  >
-                    <Icon className={`w-5 h-5 ${accent.iconText}`} />
-                  </div>
-                  {href && (
-                    <ArrowUpRight
-                      className={`w-4 h-4 flex-shrink-0 mt-1 opacity-50 transition group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${accent.cta}`}
-                    />
-                  )}
+                <div
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center flex-shrink-0 ${accent.iconBg}`}
+                >
+                  <Icon className={`w-4 h-4 ${accent.iconText}`} />
                 </div>
 
-                <div className="space-y-1 flex-1">
-                  <p className="text-sm font-bold text-white">{connection.label}</p>
-                  <p className="text-xs text-zinc-500 leading-relaxed">{hint}</p>
-                </div>
+                <span className={`text-sm font-semibold truncate min-w-0 ${accent.cta}`}>
+                  {connection.label}
+                </span>
 
-                <div className="mt-4 pt-4 border-t border-zinc-800/80">
-                  {href ? (
-                    <p className={`text-xs font-bold uppercase tracking-wider ${accent.cta}`}>
-                      {action} →
-                    </p>
-                  ) : (
-                    <p className="text-xs text-zinc-500">Not available</p>
-                  )}
-                </div>
+                <span className="flex-1 min-w-6" aria-hidden="true" />
+
+                {href ? (
+                  <ArrowUpRight
+                    className={`w-4 h-4 flex-shrink-0 opacity-50 transition group-hover:opacity-100 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 ${accent.cta}`}
+                  />
+                ) : (
+                  <span className="text-xs text-zinc-500 flex-shrink-0">Unavailable</span>
+                )}
               </>
             );
 
             if (href) {
               return (
-                <a
-                  key={connection.id}
-                  href={href}
-                  className={cardClass}
-                >
-                  {inner}
-                </a>
+                <li key={connection.id} className="min-w-0">
+                  <a href={href} className={rowClass}>
+                    {inner}
+                  </a>
+                </li>
               );
             }
 
             return (
-              <div key={connection.id} className={cardClass}>
+              <li key={connection.id} className={`min-w-0 ${rowClass}`}>
                 {inner}
-              </div>
+              </li>
             );
           })}
-        </div>
+        </ul>
       )}
     </section>
   );
