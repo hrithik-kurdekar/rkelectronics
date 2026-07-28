@@ -75,7 +75,7 @@ export default async function RKStorefrontHome() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-600 flex flex-col">
-      <StorefrontHeader roots={roots} demo={demo} />
+      <StorefrontHeader demo={demo} />
 
       {error && (
         <div className={`${STOREFRONT_CONTAINER} pt-6`}>

@@ -1,35 +1,26 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Cpu, ChevronDown, Menu, X } from 'lucide-react';
-import { categorySlugFromName } from '@/lib/category-slug';
+import { Cpu, Menu, X } from 'lucide-react';
 import { STOREFRONT_CONTAINER } from '@/lib/storefront-layout';
 
-export default function StorefrontHeader({ roots = [], demo = false }) {
+const navLinkClass = (active) =>
+  `inline-flex items-center h-9 px-3 rounded-lg text-xs font-semibold uppercase tracking-wide transition ${
+    active ? 'bg-zinc-800 text-blue-400' : 'text-zinc-300 hover:text-white hover:bg-zinc-900'
+  }`;
+
+export default function StorefrontHeader({ demo = false }) {
   const pathname = usePathname();
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const dropdownRef = useRef(null);
 
   useEffect(() => {
-    setCategoriesOpen(false);
     setMobileOpen(false);
   }, [pathname]);
 
-  useEffect(() => {
-    const onPointerDown = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setCategoriesOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', onPointerDown);
-    return () => document.removeEventListener('mousedown', onPointerDown);
-  }, []);
-
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md relative">
       <div className={`${STOREFRONT_CONTAINER} h-16 sm:h-18 flex items-center gap-4`}>
         <Link href="/" className="flex items-center gap-2.5 flex-shrink-0 min-w-0">
           <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white flex-shrink-0">
@@ -43,50 +34,10 @@ export default function StorefrontHeader({ roots = [], demo = false }) {
         <div className="flex-1" />
 
         <nav className="hidden md:flex items-center gap-1.5">
-          <div className="relative" ref={dropdownRef}>
-            <button
-              type="button"
-              onClick={() => setCategoriesOpen((open) => !open)}
-              className={`inline-flex items-center gap-1.5 h-9 px-3 rounded-lg text-xs font-semibold uppercase tracking-wide transition ${
-                categoriesOpen
-                  ? 'bg-zinc-800 text-blue-400'
-                  : 'text-zinc-300 hover:text-white hover:bg-zinc-900'
-              }`}
-              aria-expanded={categoriesOpen}
-              aria-haspopup="listbox"
-            >
-              Categories
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform ${categoriesOpen ? 'rotate-180' : ''}`} />
-            </button>
-
-            {categoriesOpen && (
-              <div className="absolute right-0 mt-2 w-64 max-h-80 overflow-y-auto rounded-xl border border-zinc-800 bg-zinc-950 shadow-2xl py-1.5 z-50">
-                {roots.length === 0 ? (
-                  <p className="px-3 py-2 text-xs text-zinc-500">No categories yet.</p>
-                ) : (
-                  roots.map((root) => (
-                    <Link
-                      key={root.id}
-                      href={`/category/${categorySlugFromName(root.name)}`}
-                      className="block px-3 py-2 text-sm text-zinc-300 hover:bg-zinc-900 hover:text-white transition"
-                      onClick={() => setCategoriesOpen(false)}
-                    >
-                      {root.name}
-                    </Link>
-                  ))
-                )}
-              </div>
-            )}
-          </div>
-
-          <Link
-            href="/about"
-            className={`inline-flex items-center h-9 px-3 rounded-lg text-xs font-semibold uppercase tracking-wide transition ${
-              pathname === '/about'
-                ? 'bg-zinc-800 text-blue-400'
-                : 'text-zinc-300 hover:text-white hover:bg-zinc-900'
-            }`}
-          >
+          <Link href="/" className={navLinkClass(pathname === '/')}>
+            Home
+          </Link>
+          <Link href="/about" className={navLinkClass(pathname === '/about')}>
             About Us
           </Link>
         </nav>
@@ -108,33 +59,23 @@ export default function StorefrontHeader({ roots = [], demo = false }) {
       </div>
 
       {mobileOpen && (
-        <div className={`md:hidden border-t border-zinc-800 bg-zinc-950 ${STOREFRONT_CONTAINER} py-3 space-y-3`}>
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 mb-1.5">Categories</p>
-            <div className="max-h-48 overflow-y-auto space-y-0.5 pr-1">
-              {roots.length === 0 ? (
-                <p className="text-xs text-zinc-500 py-1">No categories yet.</p>
-              ) : (
-                roots.map((root) => (
-                  <Link
-                    key={root.id}
-                    href={`/category/${categorySlugFromName(root.name)}`}
-                    className="block rounded-lg px-2.5 py-2 text-sm text-zinc-300 hover:bg-zinc-900 hover:text-white"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    {root.name}
-                  </Link>
-                ))
-              )}
-            </div>
+        <div className="md:hidden absolute inset-x-0 top-full z-50 border-t border-zinc-800 bg-zinc-950/95 backdrop-blur-md shadow-xl">
+          <div className={`${STOREFRONT_CONTAINER} py-3 space-y-1`}>
+            <Link
+              href="/"
+              className="block rounded-lg px-2.5 py-2 text-sm font-semibold text-zinc-200 hover:bg-zinc-900"
+              onClick={() => setMobileOpen(false)}
+            >
+              Home
+            </Link>
+            <Link
+              href="/about"
+              className="block rounded-lg px-2.5 py-2 text-sm font-semibold text-zinc-200 hover:bg-zinc-900"
+              onClick={() => setMobileOpen(false)}
+            >
+              About Us
+            </Link>
           </div>
-          <Link
-            href="/about"
-            className="block rounded-lg px-2.5 py-2 text-sm font-semibold text-zinc-200 hover:bg-zinc-900"
-            onClick={() => setMobileOpen(false)}
-          >
-            About Us
-          </Link>
         </div>
       )}
     </header>

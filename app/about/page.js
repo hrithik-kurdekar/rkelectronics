@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import StorefrontHeader from '@/app/components/StorefrontHeader';
 import StorefrontFooter from '@/app/components/StorefrontFooter';
-import { fetchRootsWithProducts, isDemoMode } from '@/lib/data';
+import { isDemoMode } from '@/lib/data';
 import { STOREFRONT_CONTAINER } from '@/lib/storefront-layout';
 
 export const metadata = {
@@ -12,12 +12,11 @@ export const metadata = {
 export const revalidate = 3600;
 
 export default async function AboutPage() {
-  const { data: roots } = await fetchRootsWithProducts();
   const demo = isDemoMode();
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col">
-      <StorefrontHeader roots={roots || []} demo={demo} />
+      <StorefrontHeader demo={demo} />
 
       <section className={`${STOREFRONT_CONTAINER} py-14 sm:py-20 flex-1`}>
         <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-blue-400/90 mb-3">

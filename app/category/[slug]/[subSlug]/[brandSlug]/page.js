@@ -59,7 +59,7 @@ export default async function BrandCategoryPage({ params }) {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-600 flex flex-col">
-      <StorefrontHeader roots={roots || []} demo={demo} />
+      <StorefrontHeader demo={demo} />
 
       <section className={`${STOREFRONT_CONTAINER} py-10 sm:py-12 space-y-10 flex-1`}>
         <div className="flex flex-wrap items-center gap-3 text-sm">

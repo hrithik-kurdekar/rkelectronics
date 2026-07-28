@@ -11,7 +11,6 @@ import StorefrontFooter from '@/app/components/StorefrontFooter';
 import {
   fetchProductBySku,
   fetchProductSkuParams,
-  fetchRootsWithProducts,
   fetchContactConnections,
   fetchProductsForBrand,
   fetchCategoryById,
@@ -38,7 +37,6 @@ export default async function ProductDetailPage({ params }) {
   const { data: product } = await fetchProductBySku(id);
   if (!product) notFound();
 
-  const { data: roots } = await fetchRootsWithProducts();
   const { data: connections } = await fetchContactConnections();
   const contactList = connections || [];
   const images = getProductImages(product);
@@ -86,7 +84,7 @@ export default async function ProductDetailPage({ params }) {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-600 flex flex-col">
-      <StorefrontHeader roots={roots || []} demo={demo} />
+      <StorefrontHeader demo={demo} />
 
       <main className={`${STOREFRONT_CONTAINER} py-6 sm:py-8 flex-1`}>
         <div className="space-y-12 sm:space-y-16">

@@ -53,7 +53,7 @@ export default async function RootCategoryPage({ params }) {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-600 flex flex-col">
-      <StorefrontHeader roots={roots || []} demo={demo} />
+      <StorefrontHeader demo={demo} />
 
       <section className={`${STOREFRONT_CONTAINER} py-10 sm:py-12 space-y-10 flex-1`}>
         <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors">
