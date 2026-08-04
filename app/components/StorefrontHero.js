@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import { ArrowDown } from 'lucide-react';
+import SocialFollowBanner from '@/app/components/SocialFollowBanner';
 import { STOREFRONT_CONTAINER } from '@/lib/storefront-layout';
 
-export default function StorefrontHero() {
+export default function StorefrontHero({ socialConnections = [] }) {
   return (
     <section className="relative w-full overflow-hidden border-b border-zinc-800/60">
       <div
@@ -44,6 +45,8 @@ export default function StorefrontHero() {
             About the shop
           </Link>
         </div>
+
+        <SocialFollowBanner connections={socialConnections} />
       </div>
     </section>
   );

@@ -35,7 +35,7 @@ export default async function AboutPage() {
             channels on this site. There is no checkout cart: we handle interest directly.
           </p>
           <p>
-            Questions about a listing? Use WhatsApp or the contact options in the footer — we&apos;re
+            Questions about a listing? Open the product page and use the chat links there — we&apos;re
             happy to help you confirm availability and condition.
           </p>
         </div>

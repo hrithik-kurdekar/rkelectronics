@@ -6,7 +6,7 @@ import CategoryGrid from '@/app/components/CategoryGrid';
 import ProductCollectionSection from '@/app/components/ProductCollectionSection';
 import LazyCategorySections from '@/app/components/LazyCategorySections';
 import StorefrontFooter from '@/app/components/StorefrontFooter';
-import { fetchRootsWithProducts, fetchBrowseSections, fetchProductCollection, isDemoMode } from '@/lib/data';
+import { fetchRootsWithProducts, fetchBrowseSections, fetchProductCollection, fetchSocialConnections, isDemoMode } from '@/lib/data';
 import { productCollectionMeta } from '@/lib/product-collections';
 import { STOREFRONT_SECTION_BATCH, STOREFRONT_SECTION_PRODUCT_LIMIT } from '@/lib/fair-product-pick';
 import { STOREFRONT_CONTAINER } from '@/lib/storefront-layout';
@@ -20,6 +20,7 @@ async function fetchStorefrontPayload() {
     browseResult,
     newArrivalsResult,
     featuredResult,
+    socialResult,
   ] = await Promise.all([
     fetchRootsWithProducts(),
     fetchBrowseSections({
@@ -37,6 +38,7 @@ async function fetchStorefrontPayload() {
       offset: 0,
       limit: STOREFRONT_SECTION_PRODUCT_LIMIT,
     }),
+    fetchSocialConnections(),
   ]);
 
   const error =
@@ -44,6 +46,7 @@ async function fetchStorefrontPayload() {
     browseResult.error?.message ||
     newArrivalsResult.error?.message ||
     featuredResult.error?.message ||
+    socialResult.error?.message ||
     null;
 
   return {
@@ -54,6 +57,7 @@ async function fetchStorefrontPayload() {
     newArrivalsHasMore: Boolean(newArrivalsResult.hasMore),
     featured: featuredResult.products || [],
     featuredHasMore: Boolean(featuredResult.hasMore),
+    socialConnections: socialResult.data || [],
     error,
   };
 }
@@ -67,6 +71,7 @@ export default async function RKStorefrontHome() {
     newArrivalsHasMore,
     featured,
     featuredHasMore,
+    socialConnections,
     error,
   } = await fetchStorefrontPayload();
   const demo = isDemoMode();
@@ -94,7 +99,7 @@ export default async function RKStorefrontHome() {
         </div>
       )}
 
-      <StorefrontHero />
+      <StorefrontHero socialConnections={socialConnections} />
 
       <section id="categories" className="scroll-mt-20 border-b border-zinc-900/60 bg-zinc-900/15 w-full">
         <div className={`${STOREFRONT_CONTAINER} py-12 sm:py-16 space-y-6`}>
