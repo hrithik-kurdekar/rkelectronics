@@ -11,7 +11,7 @@ const navLinkClass = (active) =>
     active ? 'bg-zinc-800 text-blue-400' : 'text-zinc-300 hover:text-white hover:bg-zinc-900'
   }`;
 
-export default function StorefrontHeader({ demo = false }) {
+export default function StorefrontHeader() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -41,12 +41,6 @@ export default function StorefrontHeader({ demo = false }) {
             About Us
           </Link>
         </nav>
-
-        {demo && (
-          <span className="hidden sm:inline-flex text-[10px] px-2 py-1 border rounded-md font-mono text-amber-400 bg-amber-500/5 border-amber-500/20 flex-shrink-0">
-            demo
-          </span>
-        )}
 
         <button
           type="button"

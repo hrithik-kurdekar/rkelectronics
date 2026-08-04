@@ -11,7 +11,6 @@ import {
   fetchRootsWithProducts,
   fetchSubsWithProducts,
   fetchBrowseSections,
-  isDemoMode,
 } from '@/lib/data';
 import { STOREFRONT_SECTION_BATCH } from '@/lib/fair-product-pick';
 import { STOREFRONT_CONTAINER } from '@/lib/storefront-layout';
@@ -21,7 +20,6 @@ export const revalidate = 3600;
 export default async function RootCategoryPage({ params }) {
   const { slug } = await params;
   const { data: roots, error: rootsError } = await fetchRootsWithProducts();
-  const demo = isDemoMode();
 
   if (rootsError) {
     return (
@@ -53,7 +51,7 @@ export default async function RootCategoryPage({ params }) {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-600 flex flex-col">
-      <StorefrontHeader demo={demo} />
+      <StorefrontHeader />
 
       <section className={`${STOREFRONT_CONTAINER} py-10 sm:py-12 space-y-10 flex-1`}>
         <Link href="/" className="inline-flex items-center gap-2 text-sm font-medium text-zinc-400 hover:text-white transition-colors">

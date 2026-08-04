@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { supabase } from '@/lib/supabase/client';
-import { isDemoMode } from '@/lib/data';
 import { ADMIN_CONTAINER } from '@/lib/storefront-layout';
 import {
   User,
@@ -21,7 +20,6 @@ import {
 export default function AdminLayoutWrapper({ children }) {
   const pathname = usePathname();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const demoMode = isDemoMode();
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -80,12 +78,6 @@ export default function AdminLayoutWrapper({ children }) {
           </nav>
 
           <div className="flex items-center gap-2 ml-auto flex-shrink-0">
-            {demoMode && (
-              <span className="hidden md:inline-flex text-[10px] px-2 py-1 border rounded-md font-mono text-amber-400 bg-amber-500/5 border-amber-500/20">
-                demo
-              </span>
-            )}
-
             <Link
               href="/"
               target="_blank"
@@ -175,16 +167,6 @@ export default function AdminLayoutWrapper({ children }) {
           </div>
         )}
       </header>
-
-      {demoMode && (
-        <div className="shrink-0 bg-amber-950/40 border-b border-amber-800/50">
-          <div className={`${ADMIN_CONTAINER} py-2 text-center text-[11px] text-amber-200/90`}>
-            Demo mode — catalog is local fixtures (read-only). Set{' '}
-            <code className="font-mono text-amber-100">NEXT_PUBLIC_DEMO_MODE=false</code> to use
-            Supabase.
-          </div>
-        </div>
-      )}
 
       <main className="flex-1 w-full flex flex-col min-h-0 overflow-hidden">{children}</main>
     </div>

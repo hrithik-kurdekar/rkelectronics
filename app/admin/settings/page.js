@@ -274,10 +274,6 @@ export default function ConnectionsPage() {
     }
   };
 
-  const contactCount = connections.filter((c) => CONTACT_CONNECTION_TYPES.includes(c.type)).length;
-  const socialCount = connections.filter((c) => SOCIAL_CONNECTION_TYPES.includes(c.type)).length;
-  const stackGroups = contactCount > 3 || socialCount > 3;
-
   function renderConnectionGroup(group, compactLayout) {
     const GroupIcon = group.icon;
     const groupTypes = group.categories.map((c) => c.type);
@@ -413,8 +409,8 @@ export default function ConnectionsPage() {
         </h2>
       </div>
 
-      <div className={`grid gap-4 pb-8 ${stackGroups ? 'grid-cols-1' : 'grid-cols-1 xl:grid-cols-2'}`}>
-        {CONNECTION_GROUPS.map((group) => renderConnectionGroup(group, !stackGroups))}
+      <div className="grid gap-4 pb-8 grid-cols-1 lg:grid-cols-2">
+        {CONNECTION_GROUPS.map((group) => renderConnectionGroup(group, true))}
       </div>
 
       {isModalOpen && (

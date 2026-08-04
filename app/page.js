@@ -6,7 +6,7 @@ import CategoryGrid from '@/app/components/CategoryGrid';
 import ProductCollectionSection from '@/app/components/ProductCollectionSection';
 import LazyCategorySections from '@/app/components/LazyCategorySections';
 import StorefrontFooter from '@/app/components/StorefrontFooter';
-import { fetchRootsWithProducts, fetchBrowseSections, fetchProductCollection, fetchSocialConnections, isDemoMode } from '@/lib/data';
+import { fetchRootsWithProducts, fetchBrowseSections, fetchProductCollection, fetchSocialConnections } from '@/lib/data';
 import { productCollectionMeta } from '@/lib/product-collections';
 import { STOREFRONT_SECTION_BATCH, STOREFRONT_SECTION_PRODUCT_LIMIT } from '@/lib/fair-product-pick';
 import { STOREFRONT_CONTAINER } from '@/lib/storefront-layout';
@@ -74,13 +74,12 @@ export default async function RKStorefrontHome() {
     socialConnections,
     error,
   } = await fetchStorefrontPayload();
-  const demo = isDemoMode();
   const newArrivalsMeta = productCollectionMeta('new-arrivals');
   const featuredMeta = productCollectionMeta('featured');
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-600 flex flex-col">
-      <StorefrontHeader demo={demo} />
+      <StorefrontHeader />
 
       {error && (
         <div className={`${STOREFRONT_CONTAINER} pt-6`}>
@@ -88,14 +87,6 @@ export default async function RKStorefrontHome() {
             <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
             <p>Could not load catalog data. Please try again later.</p>
           </div>
-        </div>
-      )}
-
-      {demo && (
-        <div className={`${STOREFRONT_CONTAINER} pt-4`}>
-          <p className="text-xs text-amber-500/90 bg-amber-500/5 border border-amber-500/15 rounded-xl px-4 py-2">
-            Demo mode: catalog is loaded from local fixtures (not Supabase).
-          </p>
         </div>
       )}
 

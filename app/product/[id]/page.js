@@ -40,7 +40,6 @@ export default async function ProductDetailPage({ params }) {
   const { data: connections } = await fetchContactConnections();
   const contactList = connections || [];
   const images = getProductImages(product);
-  const demo = isDemoMode();
 
   const [{ data: rootCat }, { data: subCat }, { data: brandCat }] = await Promise.all([
     product.root_category_id ? fetchCategoryById(product.root_category_id) : Promise.resolve({ data: null }),
@@ -84,7 +83,7 @@ export default async function ProductDetailPage({ params }) {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-600 flex flex-col">
-      <StorefrontHeader demo={demo} />
+      <StorefrontHeader />
 
       <main className={`${STOREFRONT_CONTAINER} py-6 sm:py-8 flex-1`}>
         <div className="space-y-12 sm:space-y-16">

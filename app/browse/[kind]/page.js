@@ -4,7 +4,7 @@ import { ArrowLeft } from 'lucide-react';
 import StorefrontHeader from '@/app/components/StorefrontHeader';
 import StorefrontFooter from '@/app/components/StorefrontFooter';
 import LazyProductGrid from '@/app/components/LazyProductGrid';
-import { fetchProductCollection, isDemoMode } from '@/lib/data';
+import { fetchProductCollection } from '@/lib/data';
 import {
   isValidProductCollectionKind,
   productCollectionMeta,
@@ -31,11 +31,9 @@ export default async function ProductCollectionBrowsePage({ params }) {
   const meta = productCollectionMeta(kind);
   const collection = await fetchProductCollection({ kind, offset: 0, limit: PRODUCT_COLLECTION_PAGE_SIZE });
 
-  const demo = isDemoMode();
-
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 selection:bg-blue-600 flex flex-col">
-      <StorefrontHeader demo={demo} />
+      <StorefrontHeader />
 
       <main className={`${STOREFRONT_CONTAINER} py-6 sm:py-8 flex-1`}>
         <div className="space-y-6 sm:space-y-8">

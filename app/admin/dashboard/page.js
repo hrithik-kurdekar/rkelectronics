@@ -208,7 +208,6 @@ export default function AdminDashboard() {
           </h1>
           <p className="text-zinc-500 text-xs sm:text-sm max-w-2xl">
             Catalog, traffic, Supabase health, free plan usage, and keep-alive status.
-            {metrics?.demoMode && ' Running in demo mode — live metrics are limited.'}
           </p>
         </div>
         <button
